@@ -300,7 +300,7 @@ The application includes comprehensive mock data for development and testing:
 
 ## 📄 License
 
-This project is proprietary software developed for EvvaCore.
+This project is under proteced the AGPL-3.0 license
 
 ## 🆘 Support
 

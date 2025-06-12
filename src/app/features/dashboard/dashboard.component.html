@@ -1,0 +1,203 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-secondary-900">Dashboard</h1>
+      <p class="text-secondary-600">Overview of your infrastructure and recent activities</p>
+    </div>
+    <button (click)="refreshData()" 
+            class="btn-primary flex items-center space-x-2">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      <span>Refresh</span>
+    </button>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+    
+    <!-- Total Hosts Card -->
+    <div class="card">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-secondary-600">Total Hosts</p>
+          <p class="text-2xl font-bold text-secondary-900">{{ stats.totalHosts }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Online Hosts Card -->
+    <div class="card">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-secondary-600">Online Hosts</p>
+          <p class="text-2xl font-bold text-green-600">{{ stats.onlineHosts }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Offline Hosts Card -->
+    <div class="card">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-secondary-600">Offline Hosts</p>
+          <p class="text-2xl font-bold text-red-600">{{ stats.offlineHosts }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Projects Card -->
+    <div class="card">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="ml-4">
+          <p class="text-sm font-medium text-secondary-600">Active Projects</p>
+          <p class="text-2xl font-bold text-purple-600">{{ stats.activeProjects }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts and Gauges Row -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Hosts Status Gauge -->
+    <div class="card">
+      <h3 class="text-lg font-semibold text-secondary-900 mb-4">Hosts Status</h3>
+      <div class="flex items-center justify-center">
+        <div class="relative w-40 h-40">
+          <!-- Gauge Background -->
+          <svg class="w-40 h-40 transform -rotate-90" viewBox="0 0 144 144">
+            <circle cx="72" cy="72" r="60" stroke="currentColor" stroke-width="8" fill="none" class="text-secondary-200"/>
+            <circle cx="72" cy="72" r="60" stroke="currentColor" stroke-width="8" fill="none" 
+                    class="text-green-500" 
+                    [style.stroke-dasharray]="377" 
+                    [style.stroke-dashoffset]="377 - (377 * hostsOnlinePercentage / 100)"
+                    stroke-linecap="round"/>
+          </svg>
+          <!-- Gauge Center Text -->
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-2xl font-bold text-secondary-900">{{ hostsOnlinePercentage }}%</div>
+              <div class="text-sm text-secondary-600">Online</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex justify-between text-sm">
+        <span class="text-green-600">{{ stats.onlineHosts }} Online</span>
+        <span class="text-red-600">{{ stats.offlineHosts }} Offline</span>
+      </div>
+    </div>
+
+    <!-- System Health -->
+    <div class="card">
+      <h3 class="text-lg font-semibold text-secondary-900 mb-4">System Health</h3>
+      <div class="space-y-4">
+        
+        <!-- CPU Usage -->
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-secondary-600">CPU Usage</span>
+            <span class="font-medium">{{ stats.systemHealth.cpu }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="stats.systemHealth.cpu"></div>
+          </div>
+        </div>
+
+        <!-- Memory Usage -->
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-secondary-600">Memory Usage</span>
+            <span class="font-medium">{{ stats.systemHealth.memory }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-yellow-500" [style.width.%]="stats.systemHealth.memory"></div>
+          </div>
+        </div>
+
+        <!-- Disk Usage -->
+        <div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-secondary-600">Disk Usage</span>
+            <span class="font-medium">{{ stats.systemHealth.disk }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill bg-green-500" [style.width.%]="stats.systemHealth.disk"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activities -->
+  <div class="card">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-secondary-900">Recent Activities</h3>
+      <button class="text-sm text-primary-600 hover:text-primary-700">View All</button>
+    </div>
+    
+    <div class="space-y-3">
+      <div *ngFor="let activity of recentActivities" 
+           class="flex items-start space-x-3 p-3 rounded-lg hover:bg-secondary-50 transition-colors duration-150">
+        
+        <!-- Activity Icon -->
+        <div class="flex-shrink-0 mt-0.5">
+          <div class="w-8 h-8 rounded-full flex items-center justify-center"
+               [class]="activity.severity === 'success' ? 'bg-green-100' : 
+                       activity.severity === 'warning' ? 'bg-yellow-100' :
+                       activity.severity === 'error' ? 'bg-red-100' : 'bg-blue-100'">
+            <svg class="w-4 h-4" [class]="getActivityColor(activity.severity)" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <!-- Server icon -->
+              <path *ngIf="getActivityIcon(activity.type) === 'server'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+              <!-- Folder icon -->
+              <path *ngIf="getActivityIcon(activity.type) === 'folder'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+              <!-- Play icon -->
+              <path *ngIf="getActivityIcon(activity.type) === 'play'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1.586a1 1 0 01.707.293l2.414 2.414a1 1 0 00.707.293H15"/>
+              <!-- Stop icon -->
+              <path *ngIf="getActivityIcon(activity.type) === 'stop'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              <!-- Info icon -->
+              <path *ngIf="getActivityIcon(activity.type) === 'info'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Activity Content -->
+        <div class="flex-1 min-w-0">
+          <p class="text-sm text-secondary-900">{{ activity.message }}</p>
+          <p class="text-xs text-secondary-500 mt-1">{{ formatTimeAgo(activity.timestamp) }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

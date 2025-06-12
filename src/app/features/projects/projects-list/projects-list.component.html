@@ -1,0 +1,282 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-2xl font-bold text-secondary-900">Projects</h1>
+      <p class="text-secondary-600">Manage Git repositories and automated deployments</p>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button (click)="refreshProjects()" 
+              [disabled]="isLoading"
+              class="btn-secondary flex items-center space-x-2">
+        <svg class="w-4 h-4" [class.animate-spin]="isLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>{{ isLoading ? 'Refreshing...' : 'Refresh' }}</span>
+      </button>
+      <button (click)="openProjectModal()" class="btn-primary flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        <span>Add Project</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Projects Grid -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div *ngFor="let project of projects" 
+         class="card hover:shadow-lg transition-shadow duration-200">
+      
+      <!-- Project Header -->
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <div class="flex items-center space-x-2 mb-1">
+            <h3 class="text-lg font-semibold text-secondary-900">{{ project.name }}</h3>
+            <span [class]="getStatusBadgeClass(project.status)">
+              <svg *ngIf="project.status === 'syncing'" class="w-2 h-2 mr-1.5 animate-spin" fill="currentColor" viewBox="0 0 8 8">
+                <circle cx="4" cy="4" r="3"/>
+              </svg>
+              <svg *ngIf="project.status !== 'syncing'" class="w-2 h-2 mr-1.5" fill="currentColor" viewBox="0 0 8 8">
+                <circle cx="4" cy="4" r="3"/>
+              </svg>
+              {{ project.status | titlecase }}
+            </span>
+          </div>
+          <p class="text-sm text-secondary-600">{{ project.responsible }}</p>
+        </div>
+        
+        <!-- Actions Dropdown -->
+        <div class="relative">
+          <button class="p-1 text-secondary-400 hover:text-secondary-600 transition-colors duration-150">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Repository Info -->
+      <div class="space-y-3 mb-4">
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+          </svg>
+          <span class="text-sm text-secondary-600 font-mono truncate">{{ project.repository }}</span>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+          </svg>
+          <span class="text-sm text-secondary-600">{{ project.branch }}</span>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+          </svg>
+          <span class="text-sm text-secondary-600">{{ project.targetHost }}</span>
+        </div>
+        
+        <div class="flex items-center space-x-2">
+          <svg class="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+          </svg>
+          <span class="text-sm text-secondary-600 font-mono">{{ project.targetPath }}</span>
+        </div>
+      </div>
+
+      <!-- Sync Information -->
+      <div class="bg-secondary-50 rounded-lg p-3 mb-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-medium text-secondary-700">Last Sync</span>
+          <span class="text-xs text-secondary-600">{{ formatLastSync(project.lastSync) }}</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-medium text-secondary-700">Schedule</span>
+          <span class="text-xs text-secondary-600">{{ getSyncScheduleText(project) }}</span>
+        </div>
+        <div *ngIf="project.autoSync" class="flex items-center mt-2">
+          <svg class="w-3 h-3 text-green-600 mr-1" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+          <span class="text-xs text-green-600">Auto-sync enabled</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center space-x-2">
+        <button (click)="cloneProject(project)" 
+                [disabled]="project.status === 'syncing'"
+                class="flex-1 btn-secondary text-sm flex items-center justify-center space-x-1"
+                title="Clone Repository">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          <span>Clone</span>
+        </button>
+        
+        <button (click)="pullProject(project)" 
+                [disabled]="project.status === 'syncing'"
+                class="flex-1 btn-secondary text-sm flex items-center justify-center space-x-1"
+                title="Pull Changes">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18"/>
+          </svg>
+          <span>Pull</span>
+        </button>
+        
+        <button (click)="pushProject(project)" 
+                [disabled]="project.status === 'syncing'"
+                class="flex-1 btn-secondary text-sm flex items-center justify-center space-x-1"
+                title="Push Changes">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+          </svg>
+          <span>Push</span>
+        </button>
+        
+        <button (click)="openProjectModal(project)" 
+                class="p-2 text-secondary-400 hover:text-secondary-600 transition-colors duration-150"
+                title="Edit Project">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+        </button>
+        
+        <button (click)="deleteProject(project.id)" 
+                class="p-2 text-secondary-400 hover:text-red-600 transition-colors duration-150"
+                title="Delete Project">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="projects.length === 0" class="text-center py-12">
+    <svg class="mx-auto h-12 w-12 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+    </svg>
+    <h3 class="mt-2 text-sm font-medium text-secondary-900">No projects found</h3>
+    <p class="mt-1 text-sm text-secondary-500">Get started by adding your first project repository.</p>
+    <div class="mt-6">
+      <button (click)="openProjectModal()" class="btn-primary">
+        Add Project
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Project Modal -->
+<div *ngIf="showProjectModal" class="modal-overlay" (click)="closeProjectModal()">
+  <div class="modal-content max-w-2xl" (click)="$event.stopPropagation()">
+    <div class="flex items-center justify-between mb-6">
+      <h3 class="text-xl font-semibold text-secondary-900">
+        {{ editingProject ? 'Edit Project' : 'Add New Project' }}
+      </h3>
+      <button (click)="closeProjectModal()" class="text-secondary-400 hover:text-secondary-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    <form (ngSubmit)="saveProject()" class="space-y-6">
+      <!-- Basic Information -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary-700 mb-2">Project Name</label>
+          <input type="text" [(ngModel)]="projectForm.name" name="projectName" required class="input-field">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-secondary-700 mb-2">Responsible</label>
+          <input type="text" [(ngModel)]="projectForm.responsible" name="projectResponsible" required class="input-field">
+        </div>
+      </div>
+
+      <!-- Repository Information -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary-700 mb-2">Repository URL</label>
+          <input type="url" [(ngModel)]="projectForm.repository" name="projectRepository" required 
+                 placeholder="https://github.com/username/repository.git" class="input-field">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-secondary-700 mb-2">Branch</label>
+          <input type="text" [(ngModel)]="projectForm.branch" name="projectBranch" required class="input-field">
+        </div>
+      </div>
+
+      <!-- Target Configuration -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-secondary-700 mb-2">Target Host</label>
+          <select [(ngModel)]="projectForm.targetHost" name="projectTargetHost" required class="input-field">
+            <option value="">Select a host</option>
+            <option *ngFor="let host of hosts" [value]="host.name">{{ host.name }} ({{ host.ip }})</option>
+          </select>
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-secondary-700 mb-2">Target Path</label>
+          <input type="text" [(ngModel)]="projectForm.targetPath" name="projectTargetPath" required 
+                 placeholder="/var/www/project" class="input-field">
+        </div>
+      </div>
+
+      <!-- Auto Sync Configuration -->
+      <div class="border-t border-secondary-200 pt-6">
+        <div class="flex items-center mb-4">
+          <input type="checkbox" [(ngModel)]="projectForm.autoSync" name="projectAutoSync" 
+                 class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 mr-3">
+          <label class="text-sm font-medium text-secondary-700">Enable automatic synchronization</label>
+        </div>
+        
+        <div *ngIf="projectForm.autoSync" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-2">Sync Type</label>
+            <select [(ngModel)]="projectForm.syncType" name="projectSyncType" class="input-field">
+              <option value="hourly">Hourly</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-secondary-700 mb-2">
+              {{ projectForm.syncType === 'hourly' ? 'Every X hours' : 
+                 projectForm.syncType === 'daily' ? 'Every X days' : 'Interval' }}
+            </label>
+            <input type="number" [(ngModel)]="projectForm.syncInterval" name="projectSyncInterval" 
+                   min="1" max="24" class="input-field">
+          </div>
+          
+          <div *ngIf="projectForm.syncType === 'weekly'">
+            <label class="block text-sm font-medium text-secondary-700 mb-2">Day of Week</label>
+            <select [(ngModel)]="projectForm.syncDayOfWeek" name="projectSyncDayOfWeek" class="input-field">
+              <option value="0">Sunday</option>
+              <option value="1">Monday</option>
+              <option value="2">Tuesday</option>
+              <option value="3">Wednesday</option>
+              <option value="4">Thursday</option>
+              <option value="5">Friday</option>
+              <option value="6">Saturday</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end space-x-3 pt-6 border-t border-secondary-200">
+        <button type="button" (click)="closeProjectModal()" class="btn-secondary">Cancel</button>
+        <button type="submit" class="btn-primary">{{ editingProject ? 'Update Project' : 'Create Project' }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+

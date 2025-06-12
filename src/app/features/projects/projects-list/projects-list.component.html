@@ -23,17 +23,18 @@
     </div>
   </div>
 
+
   <!-- Projects Grid -->
   <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
     <div *ngFor="let project of projects" 
          class="card hover:shadow-lg transition-shadow duration-200">
-      
+      <!-- todo: Seprar lógicca para um componente project-card.component.ts/html/css -->
       <!-- Project Header -->
       <div class="flex items-start justify-between mb-4">
         <div class="flex-1">
           <div class="flex items-center space-x-2 mb-1">
             <h3 class="text-lg font-semibold text-secondary-900">{{ project.name }}</h3>
-            <span [class]="getStatusBadgeClass(project.status)">
+            <span [class]="getStatusBadgeClass(project.status)" class="rounded-lg flex items-center p-[2px] pl-[10px] pr-[10px]  text-sm space-x-2">
               <svg *ngIf="project.status === 'syncing'" class="w-2 h-2 mr-1.5 animate-spin" fill="currentColor" viewBox="0 0 8 8">
                 <circle cx="4" cy="4" r="3"/>
               </svg>

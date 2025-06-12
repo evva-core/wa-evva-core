@@ -27,7 +27,7 @@ const initialState: HostState = {
   providedIn: 'root'
 })
 export class HostStore {
-  private stateSubject = new BehaviorSubject<HostState>(initialState);
+  private readonly stateSubject = new BehaviorSubject<HostState>(initialState);
   public state$ = this.stateSubject.asObservable();
 
   constructor() {}

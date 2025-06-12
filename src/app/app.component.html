@@ -9,7 +9,7 @@
   <!-- Main Layout -->
   <div class="flex">
     <!-- Sidebar -->
-    <app-sidebar 
+    <app-sidebar class=""
       [isOpen]="isSidebarOpen"
       [isCollapsed]="isSidebarCollapsed"
       (sidebarClose)="closeSidebar()">
@@ -17,7 +17,7 @@
     
     <!-- Main Content -->
     <main class="flex-1 transition-all duration-300 ease-in-out"
-          [class.ml-64]="isSidebarOpen && !isSidebarCollapsed"
+          [class.ml-6]="isSidebarOpen && !isSidebarCollapsed"
           [class.ml-16]="isSidebarOpen && isSidebarCollapsed"
           [class.ml-0]="!isSidebarOpen">
       <div class="p-6">
@@ -34,9 +34,9 @@
   <div *ngIf="isHostModalOpen" 
        class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center"
        (click)="closeHostModal()">
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4 overflow-auto max-h-[600px]" (click)="$event.stopPropagation()">
       <h2 class="text-lg font-semibold mb-4">Add New Host</h2>
-      <p class="text-secondary-600 mb-4">Host creation modal will be implemented in the next phase.</p>
+      <app-host-form></app-host-form>
       <button (click)="closeHostModal()" 
               class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors">
         Close
@@ -50,7 +50,7 @@
        (click)="closeProjectModal()">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
       <h2 class="text-lg font-semibold mb-4">Create New Project</h2>
-      <p class="text-secondary-600 mb-4">Project creation modal will be implemented in the next phase.</p>
+      <p class="text-secondary-600 mb-4"><app-project-form></app-project-form></p>
       <button (click)="closeProjectModal()" 
               class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors">
         Close

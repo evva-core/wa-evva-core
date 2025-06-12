@@ -4,19 +4,29 @@ import { RouterOutlet } from '@angular/router';
 import { HeaderComponent } from './layout/header/header.component';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { NotificationToastComponent } from './shared/notification-toast/notification-toast.component';
+import { ProjectFormComponent } from './shared/project-form/project-form.component';
+import { HostFormComponent } from './shared/host-form/host-form.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, HeaderComponent, SidebarComponent, NotificationToastComponent],
+  imports: [
+    CommonModule,
+    RouterOutlet,
+    HeaderComponent,
+    SidebarComponent,
+    NotificationToastComponent,
+    ProjectFormComponent,
+    HostFormComponent
+  ],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.css']
+  styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
   title = 'evvacore-frontend';
   isSidebarOpen = true;
   isSidebarCollapsed = false;
-  
+
   // Modal states
   isHostModalOpen = false;
   isProjectModalOpen = false;
@@ -49,4 +59,3 @@ export class AppComponent {
     this.isProjectModalOpen = false;
   }
 }
-

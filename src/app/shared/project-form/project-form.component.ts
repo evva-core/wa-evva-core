@@ -1,42 +1,28 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
 import { Project, Host } from '../../core/models';
 
 @Component({
   selector: 'app-project-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   templateUrl: './project-form.component.html',
   styleUrl: './project-form.component.css'
 })
 export class ProjectFormComponent implements OnInit {
   @Input() project: Project | null = null;
-  @Input() isEditMode: boolean = false;
-  @Input() showActions: boolean = true;
+  @Input() isEditMode = false;
+  @Input() showActions = true;
   @Input() hosts: Host[] = [];
+  @Input() isModal = false;
+
   @Output() formSubmit = new EventEmitter<Partial<Project>>();
   @Output() formCancel = new EventEmitter<void>();
+  @Output() closeModal = new EventEmitter<void>();
 
   projectForm!: FormGroup;
   isSubmitting = false;
-
-  scheduleTypes = [
-    { value: 'disabled', label: 'Disabled' },
-    { value: 'hourly', label: 'Every X hours' },
-    { value: 'daily', label: 'Daily at specific time' },
-    { value: 'weekly', label: 'Weekly on specific day' }
-  ];
-
-  daysOfWeek = [
-    { value: 0, label: 'Sunday' },
-    { value: 1, label: 'Monday' },
-    { value: 2, label: 'Tuesday' },
-    { value: 3, label: 'Wednesday' },
-    { value: 4, label: 'Thursday' },
-    { value: 5, label: 'Friday' },
-    { value: 6, label: 'Saturday' }
-  ];
 
   constructor(private fb: FormBuilder) {}
 
@@ -51,38 +37,41 @@ export class ProjectFormComponent implements OnInit {
       branch: [this.project?.branch || 'main', [Validators.required]],
       targetPath: [this.project?.targetPath || '', [Validators.required]],
       hostId: [this.project?.hostId || '', [Validators.required]],
+      hostName: [this.project?.hostName || ''],
       responsible: [this.project?.responsible || '', [Validators.required]],
-      autoSyncEnabled: [this.project?.autoSync?.enabled || false],
-      autoSyncType: [this.project?.autoSync?.type || 'disabled'],
-      autoSyncInterval: [this.project?.autoSync?.intervalHours || 24, [Validators.min(1), Validators.max(168)]],
-      autoSyncDay: [this.project?.autoSync?.schedule?.dayOfWeek || 1],
-      autoSyncTime: [this.project?.autoSync?.schedule?.time || '02:00']
-    });
-
-    // Watch for auto-sync changes
-    this.projectForm.get('autoSyncEnabled')?.valueChanges.subscribe(enabled => {
-      if (!enabled) {
-        this.projectForm.patchValue({ autoSyncType: 'disabled' });
-      }
+      status: [this.project?.status || 'ready'],
+      lastSync: [this.project?.lastSync || new Date()],
+      lastClone: [this.project?.lastClone || new Date()],
+      lastPull: [this.project?.lastPull || new Date()],
+      lastPush: [this.project?.lastPush || new Date()],
+      autoSync: [this.project?.autoSync || false],
+      createdAt: [this.project?.createdAt || new Date()],
+      updatedAt: [this.project?.updatedAt || new Date()],
+      isDockerEnabled: [this.project?.isDockerEnabled || false],
+      dockerConfig: this.fb.group({
+        useDockerCompose: [this.project?.dockerConfig?.useDockerCompose || false],
+        containerPort: [this.project?.dockerConfig?.containerPort || 8080],
+        hostPort: [this.project?.dockerConfig?.hostPort || 8080]
+      })
     });
   }
 
-  private urlValidator(control: any) {
+  private urlValidator(control: FormControl) {
     const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
     const gitPattern = /^(https?:\/\/)?(git@)?[\w\.-]+[:\\/][\w\.-]+\/[\w\.-]+\.git$/;
-    
+
     if (!control.value) return null;
-    
+
     const isValidUrl = urlPattern.test(control.value);
     const isValidGit = gitPattern.test(control.value);
-    
+
     return (isValidUrl || isValidGit) ? null : { invalidUrl: true };
   }
 
   onSubmit(): void {
     if (this.projectForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
-      
+
       const formValue = this.projectForm.value;
       const projectData: Partial<Project> = {
         name: formValue.name,
@@ -91,30 +80,23 @@ export class ProjectFormComponent implements OnInit {
         targetPath: formValue.targetPath,
         hostId: formValue.hostId,
         responsible: formValue.responsible,
-        autoSync: formValue.autoSyncEnabled ? {
-          id: this.project?.autoSync?.id || '',
-          enabled: true,
-          type: formValue.autoSyncType,
-          intervalHours: formValue.autoSyncType === 'hourly' ? formValue.autoSyncInterval : undefined,
-          schedule: formValue.autoSyncType === 'weekly' ? {
-            dayOfWeek: formValue.autoSyncDay,
-            time: formValue.autoSyncTime
-          } : undefined
-        } : undefined
+        autoSync: formValue.autoSync,
+        isDockerEnabled: formValue.isDockerEnabled,
+        dockerConfig: formValue.dockerConfig
       };
 
       this.formSubmit.emit(projectData);
-      
-      // Reset submitting state after a delay
+
       setTimeout(() => {
         this.isSubmitting = false;
       }, 1000);
     } else {
-      // Mark all fields as touched to show validation errors
-      Object.keys(this.projectForm.controls).forEach(key => {
-        this.projectForm.get(key)?.markAsTouched();
-      });
+      this.projectForm.markAllAsTouched();
     }
+  }
+
+  closeProjectModal(): void {
+    this.closeModal.emit();
   }
 
   onCancel(): void {
@@ -137,18 +119,4 @@ export class ProjectFormComponent implements OnInit {
     const field = this.projectForm.get(fieldName);
     return !!(field?.invalid && field.touched);
   }
-
-  get showAutoSyncOptions(): boolean {
-    return this.projectForm.get('autoSyncEnabled')?.value && 
-           this.projectForm.get('autoSyncType')?.value !== 'disabled';
-  }
-
-  get showIntervalOptions(): boolean {
-    return this.showAutoSyncOptions && this.projectForm.get('autoSyncType')?.value === 'hourly';
-  }
-
-  get showScheduleOptions(): boolean {
-    return this.showAutoSyncOptions && this.projectForm.get('autoSyncType')?.value === 'weekly';
-  }
 }
-

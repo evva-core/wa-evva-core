@@ -1,34 +1,54 @@
-export interface Host {
-  id: string;
-  name: string;
-  ipAddress: string; // Changed from 'ip' to 'ipAddress'
-  operatingSystem: string;
-  architecture: string;
-  status: 'online' | 'offline';
-  port?: number;
-  username?: string;
-  description?: string;
-  location?: string;
-  tags?: string[];
-  uptime?: string;
-  lastSeen?: Date;
-  diskUsage?: {
-    used: number;
-    total: number;
-    percentage: number;
-  };
-  memoryUsage?: {
-    used: number;
-    total: number;
-    percentage: number;
-  };
-  topProcesses?: Process[];
-  services?: Service[];
-  programs?: Program[];
-  createdAt?: Date;
-  updatedAt?: Date;
+export interface ApiResponse<T> {
+  data: T;
+  success: boolean;
+  message?: string;
+  errors?: { [key: string]: string[] };
 }
 
+export interface Host {
+  id: number;
+  name: string;
+  operatingSystem: string;
+  ipAddress: string;
+  architecture: string;
+  isActive: boolean;
+  port: number;
+  description: string;
+  location: string;
+  uniqueId: string;
+}
+
+export interface DiskUsage {
+  used: number;
+  total: number;
+  percentage: number;
+}
+
+export interface MemoryUsage {
+  used: number;
+  total: number;
+  percentage: number;
+}
+
+export interface NetworkInfo {
+  bytesIn: string;
+  bytesOut: string;
+}
+
+export interface DetailedHost extends Host {
+  status: 'online' | 'offline';
+  diskUsage: DiskUsage;
+  memoryUsage: MemoryUsage;
+  topProcesses: Process[];
+  services: Service[];
+  programs: Program[];
+  lastSeen: Date;
+  uptime: string;
+  cpuUsage: number;
+  networkInfo: NetworkInfo;
+}
+
+//Virá do cb-agent
 export interface Process {
   id: string;
   name: string;
@@ -36,7 +56,7 @@ export interface Process {
   cpuUsage: number;
   pid: number;
 }
-
+//Virá do cb-agent
 export interface Service {
   id: string;
   name: string;
@@ -78,26 +98,24 @@ export interface Project {
   branch: string;
   targetPath: string;
   hostId: string;
+  hostName?: string;
   responsible: string;
-  status: 'cloning' | 'ready' | 'updating' | 'error';
+  status: 'cloning' | 'ready' | 'updating' | 'error'|'syncing';
+  lastSync: Date;
   lastClone?: Date;
   lastPull?: Date;
   lastPush?: Date;
-  autoSync?: AutoSync;
+  autoSync?: boolean;
   createdAt: Date;
   updatedAt: Date;
+  isDockerEnabled: boolean;
+  dockerConfig?: DockerConfig;
 }
 
-export interface AutoSync {
-  id: string;
-  enabled: boolean;
-  type: 'interval' | 'schedule';
-  intervalHours?: number;
-  schedule?: {
-    dayOfWeek: number;
-    time: string;
-  };
-  nextSync?: Date;
+export interface DockerConfig {
+  useDockerCompose: boolean;
+  containerPort: number;
+  hostPort: number;
 }
 
 export interface DashboardStats {
@@ -113,12 +131,7 @@ export interface DashboardStats {
   };
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data: T;
-  message?: string;
-  error?: string;
-}
+
 
 export interface WebSocketMessage {
   type: 'host_status_update' | 'project_sync_update' | 'system_alert' | 'notification';
@@ -139,4 +152,3 @@ export interface ProjectFilter {
   responsible?: string;
   search?: string;
 }
-

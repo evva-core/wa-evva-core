@@ -50,7 +50,7 @@
        (click)="closeProjectModal()">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4" (click)="$event.stopPropagation()">
       <h2 class="text-lg font-semibold mb-4">Create New Project</h2>
-      <p class="text-secondary-600 mb-4"><app-project-form></app-project-form></p>
+      <p class="text-secondary-600 mb-4"><app-project-form [isModal]="true"></app-project-form></p>
       <button (click)="closeProjectModal()" 
               class="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors">
         Close

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpService } from './http.service';
-import { Project, ProjectFilter, ApiResponse, AutoSync } from '../models';
+import { Project, ProjectFilter, ApiResponse } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -75,14 +75,14 @@ export class ProjectService {
     return this.http.get<ApiResponse<any[]>>(`${this.endpoint}/${id}/logs${params}`);
   }
 
-  // Auto-sync management
-  getAutoSync(projectId: string): Observable<ApiResponse<AutoSync>> {
-    return this.http.get<ApiResponse<AutoSync>>(`${this.endpoint}/${projectId}/auto-sync`);
-  }
+  // // Auto-sync management
+  // getAutoSync(projectId: string): Observable<ApiResponse<AutoSync>> {
+  //   return this.http.get<ApiResponse<AutoSync>>(`${this.endpoint}/${projectId}/auto-sync`);
+  // }
 
-  updateAutoSync(projectId: string, autoSync: Partial<AutoSync>): Observable<ApiResponse<AutoSync>> {
-    return this.http.put<ApiResponse<AutoSync>>(`${this.endpoint}/${projectId}/auto-sync`, autoSync);
-  }
+  // updateAutoSync(projectId: string, autoSync: Partial<AutoSync>): Observable<ApiResponse<AutoSync>> {
+  //   return this.http.put<ApiResponse<AutoSync>>(`${this.endpoint}/${projectId}/auto-sync`, autoSync);
+  // }
 
   enableAutoSync(projectId: string): Observable<ApiResponse<void>> {
     return this.http.post<ApiResponse<void>>(`${this.endpoint}/${projectId}/auto-sync/enable`);

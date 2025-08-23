@@ -53,7 +53,7 @@ export class StateService {
     this.updateState({ hosts });
   }
 
-  removeHost(hostId: string): void {
+  removeHost(hostId: number): void {
     const currentHosts = this.stateSubject.value.hosts;
     const hosts = currentHosts.filter(host => host.id !== hostId);
     this.updateState({ hosts });

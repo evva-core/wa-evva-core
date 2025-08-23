@@ -1,62 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-
-interface HostDetail {
-  id: string;
-  name: string;
-  ip: string;
-  operatingSystem: string;
-  architecture: string;
-  status: 'online' | 'offline';
-  diskUsage: {
-    used: number;
-    total: number;
-    percentage: number;
-  };
-  memoryUsage: {
-    used: number;
-    total: number;
-    percentage: number;
-  };
-  topProcesses: Process[];
-  services: Service[];
-  programs: Program[];
-  lastSeen: Date;
-  uptime: string;
-  location: string;
-  cpuUsage: number;
-  networkInfo: {
-    bytesIn: string;
-    bytesOut: string;
-  };
-}
-
-interface Process {
-  id: string;
-  name: string;
-  memoryUsage: number;
-  cpuUsage: number;
-  pid: number;
-}
-
-interface Service {
-  id: string;
-  name: string;
-  description: string;
-  status: 'running' | 'stopped' | 'error';
-  autoManagement: boolean;
-  executablePath: string;
-}
-
-interface Program {
-  id: string;
-  name: string;
-  description: string;
-  executablePath: string;
-  status: 'running' | 'stopped' | 'error';
-}
+import { Subscription } from 'rxjs';
+import { Host, DetailedHost, Process, Service, Program, DiskUsage, MemoryUsage, NetworkInfo, ApiResponse } from '../../../core/models';
+import { HostService } from '../../../core/services/host.service';
+import { SignalrService } from '../../../core/services/signalr.service';
 
 @Component({
   selector: 'app-host-detail',
@@ -65,11 +14,12 @@ interface Program {
   templateUrl: './host-detail.component.html',
   styleUrls: ['./host-detail.component.css']
 })
-export class HostDetailComponent implements OnInit {
-  hostId: string = '';
-  host: HostDetail | null = null;
+export class HostDetailComponent implements OnInit, OnDestroy {
+  uniqueId: string = '';
+  host: DetailedHost | null = null;
   isLoading = true;
-  
+  private dataSubscription: Subscription = new Subscription();
+
   // Modal states
   showServiceModal = false;
   showProgramModal = false;
@@ -90,62 +40,106 @@ export class HostDetailComponent implements OnInit {
     executablePath: ''
   };
 
-  constructor(private route: ActivatedRoute) {}
+  constructor(
+    private route: ActivatedRoute,
+    private hostService: HostService,
+    private signalrService: SignalrService
+  ) {}
 
   ngOnInit(): void {
     this.route.params.subscribe(params => {
-      this.hostId = params['id'];
-      this.loadHostDetails();
+      this.uniqueId = params['uniqueId'];
+      this.loadInitialHostData();
+      this.setupSignalR();
     });
   }
 
-  private loadHostDetails(): void {
-    // Mock data - in real app, this would be an API call
-    setTimeout(() => {
-      this.host = {
-        id: this.hostId,
-        name: 'web-server-01',
-        ip: '192.168.1.10',
-        operatingSystem: 'Ubuntu 22.04 LTS',
-        architecture: 'x64',
-        status: 'online',
-        diskUsage: {
-          used: 45.2,
-          total: 100,
-          percentage: 45
-        },
-        memoryUsage: {
-          used: 12.8,
-          total: 16,
-          percentage: 80
-        },
-        topProcesses: [
-          { id: '1', name: 'nginx', memoryUsage: 15.2, cpuUsage: 5.1, pid: 1234 },
-          { id: '2', name: 'mysql', memoryUsage: 12.8, cpuUsage: 8.3, pid: 1235 },
-          { id: '3', name: 'node', memoryUsage: 8.5, cpuUsage: 3.2, pid: 1236 },
-          { id: '4', name: 'redis', memoryUsage: 6.1, cpuUsage: 1.8, pid: 1237 },
-          { id: '5', name: 'docker', memoryUsage: 4.3, cpuUsage: 2.1, pid: 1238 }
-        ],
-        services: [
-          { id: '1', name: 'nginx', description: 'Web server', status: 'running', autoManagement: true, executablePath: '/usr/sbin/nginx' },
-          { id: '2', name: 'mysql', description: 'Database server', status: 'running', autoManagement: true, executablePath: '/usr/bin/mysqld' },
-          { id: '3', name: 'redis', description: 'Cache server', status: 'stopped', autoManagement: false, executablePath: '/usr/bin/redis-server' }
-        ],
-        programs: [
-          { id: '1', name: 'backup-script', description: 'Daily backup routine', executablePath: '/opt/scripts/backup.sh', status: 'stopped' },
-          { id: '2', name: 'log-cleaner', description: 'Log cleanup utility', executablePath: '/opt/scripts/clean-logs.sh', status: 'running' }
-        ],
-        lastSeen: new Date(),
-        uptime: '15d 8h 32m',
-        location: 'Data Center A',
-        cpuUsage: 25,
-        networkInfo: {
-          bytesIn: '1.2 TB',
-          bytesOut: '856 GB'
-        }
-      };
-      this.isLoading = false;
-    }, 1000);
+  ngOnDestroy(): void {
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+    }
+    if (this.uniqueId) {
+      this.signalrService.leaveHostGroup(this.uniqueId);
+    }
+    this.signalrService.stopConnection();
+  }
+
+  private loadInitialHostData(): void {
+    this.isLoading = true;
+    this.hostService.getHostByUniqueId(this.uniqueId).subscribe({
+      next: (response: ApiResponse<Host>) => {
+        
+        const initialHost = response.data; 
+        this.host = {
+          ...initialHost,
+          status: initialHost.isActive ? 'online' : 'offline', 
+          cpuUsage: 0, 
+          diskUsage: { used: 0, total: 0, percentage: 0 },
+          memoryUsage: { used: 0, total: 0, percentage: 0 }, 
+          networkInfo: { bytesIn: '0 KB', bytesOut: '0 KB' }, 
+          topProcesses: [], 
+          services: [], // Default
+          programs: [], // Default
+          uptime: 'N/A', // Default
+          lastSeen: new Date(), // Default
+        };
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading host details:', error);
+        this.isLoading = false;
+      }
+    });
+    console.log(this.host)
+  }
+
+  private setupSignalR(): void {
+    this.signalrService.startConnection()
+      .then(() => {
+        console.log('SignalR Connected!');
+        console.log(this.uniqueId)
+        this.signalrService.joinHostGroup(this.uniqueId);
+        this.signalrService.addDataListener();
+        this.dataSubscription = this.signalrService.data$.subscribe((data: any) => {
+          console.log('Received SignalR data:', data);
+          if (this.host) {
+            this.host = {
+              ...this.host,
+              cpuUsage: data.cpuUsage || this.host.cpuUsage,
+              memoryUsage: {
+                used: data.usedMemoryGB || this.host.memoryUsage.used,
+                total: data.totalMemoryGB || this.host.memoryUsage.total,
+                percentage: data.memoryUsagePercentage || this.host.memoryUsage.percentage
+              },
+              diskUsage: data.Disks && data.Disks.length > 0 ? {
+                used: data.Disks[0].usedSpaceGB,
+                total: data.Disks[0].totalSpaceGB,
+                percentage: data.Disks[0].usagePercentage
+              } : this.host.diskUsage,
+              topProcesses: data.topProcesses ? data.topProcesses.map((p: any) => ({
+                id: p.id.toString(),
+                name: p.name,
+                memoryUsage: p.memoryUsageBytes,
+                cpuUsage: p.cpuUsage
+              })) : this.host.topProcesses,
+              services: data.services ? data.services.map((s: any) => ({
+                id: s.name,
+                name: s.name,
+                description: s.displayName,
+                status: s.status.toLowerCase(),
+                autoManagement: false,
+                executablePath: ''
+              })) : this.host.services,
+              uptime: data.uptime || this.host.uptime,
+              lastSeen: data.lastSeen ? new Date(data.LastSeen) : this.host.lastSeen,
+              networkInfo: data.networkInfo || this.host.networkInfo,
+            };
+            this.host.status = this.host.isActive ? 'online' : 'offline';
+            this.isLoading = false; 
+          }
+        });
+      })
+      .catch(err => console.error('Error while starting SignalR connection: ' + err));
   }
 
   // Service management
@@ -247,7 +241,7 @@ export class HostDetailComponent implements OnInit {
       case 'error':
         return 'text-red-600';
       default:
-        return 'text-secondary-600';
+        return 'text-gray-600';
     }
   }
 
@@ -262,13 +256,11 @@ export class HostDetailComponent implements OnInit {
       case 'error':
         return 'bg-red-100 text-red-800';
       default:
-        return 'bg-secondary-100 text-secondary-800';
+        return 'bg-gray-100 text-gray-800';
     }
   }
 
   refreshHostData(): void {
-    this.isLoading = true;
-    this.loadHostDetails();
+    this.loadInitialHostData();
   }
 }
-

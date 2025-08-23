@@ -21,12 +21,9 @@ export class HostFormComponent implements OnInit {
   isSubmitting = false;
 
   operatingSystems = [
-    { value: 'windows', label: 'Windows' },
-    { value: 'linux', label: 'Linux' },
-    { value: 'macos', label: 'macOS' },
-    { value: 'ubuntu', label: 'Ubuntu' },
-    { value: 'centos', label: 'CentOS' },
-    { value: 'debian', label: 'Debian' }
+    { value: 'Windows', label: 'Windows' },
+    { value: 'Linux', label: 'Linux' },
+    { value: 'MacOS', label: 'macOS' }
   ];
 
   architectures = [
@@ -54,11 +51,7 @@ export class HostFormComponent implements OnInit {
       architecture: ['', Validators.required],
       description: ['', Validators.maxLength(500)],
       location: ['', Validators.maxLength(100)],
-      tags: [''],
       port: [22, [Validators.required, Validators.min(1), Validators.max(65535)]],
-      username: ['', Validators.required],
-      password: [''],
-      sshKey: [''],
       isActive: [true]
     });
   }
@@ -72,12 +65,8 @@ export class HostFormComponent implements OnInit {
         architecture: this.host.architecture,
         description: this.host.description || '',
         location: this.host.location || '',
-        tags: this.host.tags?.join(', ') || '',
         port: this.host.port || 22,
-        username: this.host.username || '',
-        password: '',
-        sshKey: '',
-        isActive: this.host.status === 'online'
+        isActive: this.host.isActive
       });
     }
   }
@@ -94,23 +83,12 @@ export class HostFormComponent implements OnInit {
         architecture: formValue.architecture,
         description: formValue.description,
         location: formValue.location,
-        tags: formValue.tags ? formValue.tags.split(',').map((tag: string) => tag.trim()).filter((tag: string) => tag) : [],
         port: formValue.port,
-        username: formValue.username,
-        status: formValue.isActive ? 'online' : 'offline'
+        isActive: formValue.isActive
       };
-
-      // Add password or SSH key if provided
-      if (formValue.password) {
-        (hostData as any).password = formValue.password;
-      }
-      if (formValue.sshKey) {
-        (hostData as any).sshKey = formValue.sshKey;
-      }
 
       this.formSubmit.emit(hostData);
       
-      // Reset submitting state after a delay
       setTimeout(() => {
         this.isSubmitting = false;
       }, 1000);
@@ -170,11 +148,7 @@ export class HostFormComponent implements OnInit {
       architecture: 'Architecture',
       description: 'Description',
       location: 'Location',
-      tags: 'Tags',
       port: 'Port',
-      username: 'Username',
-      password: 'Password',
-      sshKey: 'SSH Key'
     };
     return labels[fieldName] || fieldName;
   }
@@ -184,4 +158,3 @@ export class HostFormComponent implements OnInit {
     return !!(control?.invalid && control.touched);
   }
 }
-

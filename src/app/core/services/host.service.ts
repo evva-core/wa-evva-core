@@ -1,18 +1,18 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpService } from './http.service';
-import { Host, HostFilter, ApiResponse, Service, Program } from '../models';
+import { Host, HostFilter, Service, Program, ApiResponse } from '../models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class HostService {
-  private readonly endpoint = '/hosts';
+  private readonly endpoint = '/api/v1/Host';
 
   constructor(private http: HttpService) {}
 
   // Get all hosts with optional filtering
-  getHosts(filter?: HostFilter): Observable<ApiResponse<Host[]>> {
+  getHosts(filter?: HostFilter): Observable<Host[]> {
     let url = this.endpoint;
     const params = new URLSearchParams();
 
@@ -27,12 +27,17 @@ export class HostService {
       url += `?${params.toString()}`;
     }
 
-    return this.http.get<ApiResponse<Host[]>>(url);
+    return this.http.get<Host[]>(url);
   }
 
   // Get host by ID
   getHost(id: string): Observable<ApiResponse<Host>> {
     return this.http.get<ApiResponse<Host>>(`${this.endpoint}/${id}`);
+  }
+
+  // Get host by UniqueId
+  getHostByUniqueId(uniqueId: string): Observable<ApiResponse<Host>> {
+    return this.http.get<ApiResponse<Host>>(`${this.endpoint}/uniqueId/${uniqueId}`);
   }
 
   // Create new host
@@ -144,4 +149,3 @@ export class HostService {
     return this.http.get<ApiResponse<any>>(`${this.endpoint}/stats`);
   }
 }
-

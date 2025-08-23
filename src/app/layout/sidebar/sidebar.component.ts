@@ -55,7 +55,8 @@ export class SidebarComponent implements OnInit {
       children: [
         { label: 'All Projects', icon: 'list', route: '/projects' },
         { label: 'Create Project', icon: 'plus', route: '/projects/add' },
-        { label: 'Templates', icon: 'template', route: '/projects/templates' }
+        { label: 'Templates', icon: 'template', route: '/projects/templates' },
+        {label: 'Docker Deployments', icon: 'docker', route: '/projects/docker-deployments'}
       ]
     },
     {

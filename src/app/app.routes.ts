@@ -22,7 +22,7 @@ export const routes: Routes = [
     title: 'Add Host - EvvaCore'
   },
   {
-    path: 'hosts/:id',
+    path: 'hosts/:uniqueId',
     loadComponent: () => import('./features/hosts/host-detail/host-detail.component').then(m => m.HostDetailComponent),
     title: 'Host Details - EvvaCore'
   },
@@ -41,4 +41,3 @@ export const routes: Routes = [
     redirectTo: '/dashboard'
   }
 ];
-

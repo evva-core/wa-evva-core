@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
 import { Host, DetailedHost, Process, Service, Program, DiskUsage, MemoryUsage, NetworkInfo, ApiResponse } from '../../../core/models';
 import { HostService } from '../../../core/services/host.service';
 import { SignalrService } from '../../../core/services/signalr.service';
@@ -19,6 +20,8 @@ export class HostDetailComponent implements OnInit, OnDestroy {
   host: DetailedHost | null = null;
   isLoading = true;
   private dataSubscription: Subscription = new Subscription();
+  private connectionStatusSubscription: Subscription = new Subscription();
+  public SignalStatus: signalR.HubConnectionState | undefined;
 
   // Modal states
   showServiceModal = false;
@@ -52,11 +55,19 @@ export class HostDetailComponent implements OnInit, OnDestroy {
       this.loadInitialHostData();
       this.setupSignalR();
     });
+
+    this.connectionStatusSubscription = this.signalrService.connectionStatus$.subscribe(status => {
+      this.SignalStatus = status;
+      console.log('SignalR Connection Status:', this.SignalStatus);
+    });
   }
 
   ngOnDestroy(): void {
     if (this.dataSubscription) {
       this.dataSubscription.unsubscribe();
+    }
+    if (this.connectionStatusSubscription) {
+      this.connectionStatusSubscription.unsubscribe();
     }
     if (this.uniqueId) {
       this.signalrService.leaveHostGroup(this.uniqueId);
@@ -74,7 +85,7 @@ export class HostDetailComponent implements OnInit, OnDestroy {
           ...initialHost,
           status: initialHost.isActive ? 'online' : 'offline', 
           cpuUsage: 0, 
-          diskUsage: { used: 0, total: 0, percentage: 0 },
+          disks: [],
           memoryUsage: { used: 0, total: 0, percentage: 0 }, 
           networkInfo: { bytesIn: '0 KB', bytesOut: '0 KB' }, 
           topProcesses: [], 
@@ -83,11 +94,11 @@ export class HostDetailComponent implements OnInit, OnDestroy {
           uptime: 'N/A', // Default
           lastSeen: new Date(), // Default
         };
-        this.isLoading = false;
+       
       },
       error: (error) => {
         console.error('Error loading host details:', error);
-        this.isLoading = false;
+       
       }
     });
     console.log(this.host)
@@ -95,9 +106,9 @@ export class HostDetailComponent implements OnInit, OnDestroy {
 
   private setupSignalR(): void {
     this.signalrService.startConnection()
-      .then(() => {
-        console.log('SignalR Connected!');
-        console.log(this.uniqueId)
+    .then(() => {
+      console.log('SignalR Connected!');
+      
         this.signalrService.joinHostGroup(this.uniqueId);
         this.signalrService.addDataListener();
         this.dataSubscription = this.signalrService.data$.subscribe((data: any) => {
@@ -107,19 +118,16 @@ export class HostDetailComponent implements OnInit, OnDestroy {
               ...this.host,
               cpuUsage: data.cpuUsage || this.host.cpuUsage,
               memoryUsage: {
-                used: data.usedMemoryGB || this.host.memoryUsage.used,
-                total: data.totalMemoryGB || this.host.memoryUsage.total,
-                percentage: data.memoryUsagePercentage || this.host.memoryUsage.percentage
+                used: data.memoryUsage.used || this.host.memoryUsage.used,
+                total: data.memoryUsage.total || this.host.memoryUsage.total,
+                percentage: data.memoryUsage.percentage || this.host.memoryUsage.percentage
               },
-              diskUsage: data.Disks && data.Disks.length > 0 ? {
-                used: data.Disks[0].usedSpaceGB,
-                total: data.Disks[0].totalSpaceGB,
-                percentage: data.Disks[0].usagePercentage
-              } : this.host.diskUsage,
+              disks: data.disks || this.host.disks,
               topProcesses: data.topProcesses ? data.topProcesses.map((p: any) => ({
-                id: p.id.toString(),
+                id: p.id,
                 name: p.name,
-                memoryUsage: p.memoryUsageBytes,
+                memoryUsageMB:Math.floor(p.memoryUsageMB),
+                memoryUsagePercentage: p.memoryUsagePercentage,
                 cpuUsage: p.cpuUsage
               })) : this.host.topProcesses,
               services: data.services ? data.services.map((s: any) => ({
@@ -131,11 +139,12 @@ export class HostDetailComponent implements OnInit, OnDestroy {
                 executablePath: ''
               })) : this.host.services,
               uptime: data.uptime || this.host.uptime,
-              lastSeen: data.lastSeen ? new Date(data.LastSeen) : this.host.lastSeen,
+              lastSeen: data.lastSeen ? new Date(data.lastSeen) : this.host.lastSeen,
               networkInfo: data.networkInfo || this.host.networkInfo,
             };
             this.host.status = this.host.isActive ? 'online' : 'offline';
             this.isLoading = false; 
+            
           }
         });
       })
@@ -227,6 +236,22 @@ export class HostDetailComponent implements OnInit, OnDestroy {
   executeProgram(program: Program): void {
     console.log('Executing program:', program.name);
     // TODO: Implement program execution logic
+  }
+
+  getSingnalStyleClass(): string {
+    switch(this.SignalStatus)
+    {
+      case 'Connected':
+        return 'status-online';
+      case 'Connecting':
+        return 'status-connecting';
+      case 'Reconnecting':
+        return 'status-reconnecting';
+      case 'Disconnected':
+        return 'status-disconnected';
+      default:
+        return 'bg-gray-500 rounded flex jusitfy-center items-center pl-2 pr-2 pt-1 pb-1 text-gray-200';
+    }
   }
 
   // Utility methods

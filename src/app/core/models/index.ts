@@ -19,9 +19,10 @@ export interface Host {
 }
 
 export interface DiskUsage {
-  used: number;
-  total: number;
-  percentage: number;
+  name: string;
+  usedSpaceGB: number;
+  totalSpaceGB: number;
+  usagePercentage: number;
 }
 
 export interface MemoryUsage {
@@ -37,7 +38,7 @@ export interface NetworkInfo {
 
 export interface DetailedHost extends Host {
   status: 'online' | 'offline';
-  diskUsage: DiskUsage;
+  disks: DiskUsage[];
   memoryUsage: MemoryUsage;
   topProcesses: Process[];
   services: Service[];
@@ -50,11 +51,11 @@ export interface DetailedHost extends Host {
 
 //Virá do cb-agent
 export interface Process {
-  id: string;
+  id: number;
   name: string;
-  memoryUsage: number;
+  memoryUsagePercentage: number;
+  memoryUsageMB: number;
   cpuUsage: number;
-  pid: number;
 }
 //Virá do cb-agent
 export interface Service {

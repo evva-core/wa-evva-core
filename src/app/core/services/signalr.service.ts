@@ -9,16 +9,39 @@ import { Observable, Subject } from 'rxjs';
 export class SignalrService {
   private hubConnection!: signalR.HubConnection; 
   private dataSubject = new Subject<any>();
+  private connectionStatusSubject = new Subject<signalR.HubConnectionState>();
 
   public data$: Observable<any> = this.dataSubject.asObservable();
+  public connectionStatus$: Observable<signalR.HubConnectionState> = this.connectionStatusSubject.asObservable();
+
 
   public startConnection(): Promise<void> {
+    this.connectionStatusSubject.next(signalR.HubConnectionState.Connecting);
     this.hubConnection = new signalR.HubConnectionBuilder()
       .withUrl(`${environment.apiUrl}/hostHub`)
       .withAutomaticReconnect()
       .build();
+      
+    this.hubConnection.onreconnecting(err => {
+      console.warn('SignalR Reconnecting:', err);
+      this.connectionStatusSubject.next(signalR.HubConnectionState.Reconnecting);
+    });
 
-    return this.hubConnection.start();
+    this.hubConnection.onreconnected(connectionId => {
+      console.log('SignalR Reconnected. Connection ID:', connectionId);
+      this.connectionStatusSubject.next(signalR.HubConnectionState.Connected);
+    });
+
+    return this.hubConnection.start().then(() => {
+      this.connectionStatusSubject.next(signalR.HubConnectionState.Connected);
+    }).catch(err => {
+      this.connectionStatusSubject.next(signalR.HubConnectionState.Disconnected);
+      throw err;
+    });
+  }
+
+  public getHubConnectionStatus(): signalR.HubConnectionState  {
+    return this.hubConnection.state;
   }
 
   public joinHostGroup(uniqueId: string): Promise<void> {
@@ -37,8 +60,11 @@ export class SignalrService {
 
   public stopConnection(): Promise<void> {
     if (this.hubConnection) {
-      return this.hubConnection.stop();
+      return this.hubConnection.stop().then(() => {
+        this.connectionStatusSubject.next(signalR.HubConnectionState.Disconnected);
+      });
     }
+    this.connectionStatusSubject.next(signalR.HubConnectionState.Disconnected);
     return Promise.resolve();
   }
 }

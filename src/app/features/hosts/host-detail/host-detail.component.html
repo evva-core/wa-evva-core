@@ -12,11 +12,11 @@
         <h1 class="text-2xl font-bold text-secondary-900">{{ host.name }}</h1>
         <p class="text-secondary-600">{{ host.ipAddress }} • {{ host.location }}</p>
       </div>
-      <span [class]="getStatusBadgeClass(host.status)">
+      <span [class]="getSingnalStyleClass()">
         <svg class="w-2 h-2 mr-1.5" fill="currentColor" viewBox="0 0 8 8">
           <circle cx="4" cy="4" r="3"/>
         </svg>
-        {{ host.status | titlecase }}
+        {{SignalStatus}}
       </span>
     </div>
     <button (click)="refreshHostData()" 
@@ -52,22 +52,27 @@
           <span class="text-secondary-600">CPU Usage</span>
           <span class="font-medium">{{ host.cpuUsage }}%</span>
         </div>
+          <div class="flex justify-between">
+          <span class="text-secondary-600">Last Heart Beat</span>
+          <span class="font-medium">{{ host.lastSeen.toLocaleDateString() }} at {{ host.lastSeen.toLocaleTimeString() }}</span>
+        </div>
+        
       </div>
     </div>
 
     <!-- Storage Information -->
     <div class="card">
       <h3 class="text-lg font-semibold text-secondary-900 mb-4">Storage</h3>
-      <div class="space-y-4">
-        <div>
+      <div class="space-y-4" >
+        <div *ngFor="let disk of host.disks" >
           <div class="flex justify-between text-sm mb-2">
-            <span class="text-secondary-600">Disk Usage</span>
-            <span class="font-medium">{{ host.diskUsage.used }} GB / {{ host.diskUsage.total }} GB</span>
+            <span class="text-secondary-600">{{ disk.name }}</span>
+            <span class="font-medium">{{ disk.usedSpaceGB }} GB / {{ disk.totalSpaceGB }} GB</span>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" [style.width.%]="host.diskUsage.percentage"></div>
+            <div class="progress-fill" [style.width.%]="disk.usagePercentage"></div>
           </div>
-          <div class="text-xs text-secondary-500 mt-1">{{ host.diskUsage.percentage }}% used</div>
+          <div class="text-xs text-secondary-500 mt-1">{{ disk.usagePercentage }}% used</div>
         </div>
       </div>
     </div>
@@ -133,12 +138,12 @@
           </div>
           <div>
             <p class="font-medium text-secondary-900">{{ process.name }}</p>
-            <p class="text-sm text-secondary-600">PID: {{ process.pid }}</p>
+            <p class="text-sm text-secondary-600">PID: {{ process.id }}</p>
           </div>
         </div>
         <div class="text-right">
-          <p class="font-medium">{{ process.memoryUsage }}% RAM</p>
-          <p class="text-sm text-secondary-600">{{ process.cpuUsage }}% CPU</p>
+          <p class="font-medium">{{process.memoryUsagePercentage}}% - {{ process.memoryUsageMB }}MB RAM</p>
+          <p class="text-sm text-secondary-600">{{ process.cpuUsage }} CPU</p>
         </div>
       </div>
     </div>
@@ -260,7 +265,7 @@
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
     </svg>
-    <p class="text-secondary-600">Loading host details...</p>
+    <p class="text-secondary-600">Awaiting Targert Host Updates...</p>
   </div>
 </div>
 

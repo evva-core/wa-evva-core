@@ -93,30 +93,29 @@ export interface Schedule {
 }
 
 export interface Project {
-  id: string;
+  id: number;
   name: string;
-  repositoryUrl: string;
-  branch: string;
-  targetPath: string;
-  hostId: string;
-  hostName?: string;
-  responsible: string;
-  status: 'cloning' | 'ready' | 'updating' | 'error'|'syncing';
-  lastSync: Date;
-  lastClone?: Date;
-  lastPull?: Date;
-  lastPush?: Date;
-  autoSync?: boolean;
+  description: string;
   createdAt: Date;
-  updatedAt: Date;
-  isDockerEnabled: boolean;
-  dockerConfig?: DockerConfig;
+  status: ProjectStatus;
+  ownerId: number;
+  repositories?: Repository[];
 }
 
-export interface DockerConfig {
-  useDockerCompose: boolean;
-  containerPort: number;
-  hostPort: number;
+export type ProjectStatus = 'Active' | 'Archived' | 'Online';
+
+export interface ProjectDetails extends Project {
+  ownerName: string;
+  repositories: Repository[];
+}
+
+export interface ProjectDto {
+  id: number;
+  name: string;
+  description: string;
+  createdAt: Date;
+  ownerName: string;
+  totalRepos: number;
 }
 
 export interface DashboardStats {
@@ -152,4 +151,31 @@ export interface ProjectFilter {
   status?: string;
   responsible?: string;
   search?: string;
+}
+
+export interface Repository {
+  id: number;
+  name: string;
+  projectId: number;
+  repositoryUrl: string;
+  branch: string;
+  targetPath: string;
+  hostId: number;
+  status: RepositoryStatus;
+  lastSync?: Date;
+  lastClone?: Date;
+  lastPush?: Date;
+  lastCommitHash?: string;
+  autoSync?: boolean;
+  isDockerEnabled?: boolean;
+  dockerConfigId?: number;
+}
+
+export enum RepositoryStatus {
+  Pending = 0,
+  Cloning = 1,
+  Cloned = 2,
+  Failed = 3,
+  Syncing = 4,
+  Synced = 5
 }

@@ -32,7 +32,12 @@ export const routes: Routes = [
     title: 'Projects - EvvaCore'
   },
   {
-    path: 'projects/add',
+    path: 'projects/:id',
+    loadComponent: () => import('./features/projects/project-details/project-details.component').then(m => m.ProjectDetailsComponent),
+    title: 'Project Details - EvvaCore'
+  },
+  {
+    path: 'proj/add',
     loadComponent:() => import('./features/projects/project-add/project-add.component').then(m=>m.ProjectAddComponent),
     title: 'Creating project'
   },

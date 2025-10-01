@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, FormControl } from '@angular/forms';
-import { Project, Host } from '../../core/models';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule, FormArray } from '@angular/forms';
+import { Project, Host, Repository } from '../../core/models';
 
 @Component({
   selector: 'app-project-form',
@@ -28,44 +28,45 @@ export class ProjectFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeForm();
+    if (!this.isEditMode) {
+      this.addRepository(); // Start with one repository form
+    }
+    // In edit mode, you would populate the repositories array based on the project input
   }
 
   private initializeForm(): void {
     this.projectForm = this.fb.group({
       name: [this.project?.name || '', [Validators.required, Validators.minLength(2)]],
-      repositoryUrl: [this.project?.repositoryUrl || '', [Validators.required, this.urlValidator]],
-      branch: [this.project?.branch || 'main', [Validators.required]],
-      targetPath: [this.project?.targetPath || '', [Validators.required]],
-      hostId: [this.project?.hostId || '', [Validators.required]],
-      hostName: [this.project?.hostName || ''],
-      responsible: [this.project?.responsible || '', [Validators.required]],
-      status: [this.project?.status || 'ready'],
-      lastSync: [this.project?.lastSync || new Date()],
-      lastClone: [this.project?.lastClone || new Date()],
-      lastPull: [this.project?.lastPull || new Date()],
-      lastPush: [this.project?.lastPush || new Date()],
-      autoSync: [this.project?.autoSync || false],
-      createdAt: [this.project?.createdAt || new Date()],
-      updatedAt: [this.project?.updatedAt || new Date()],
-      isDockerEnabled: [this.project?.isDockerEnabled || false],
-      dockerConfig: this.fb.group({
-        useDockerCompose: [this.project?.dockerConfig?.useDockerCompose || false],
-        containerPort: [this.project?.dockerConfig?.containerPort || 8080],
-        hostPort: [this.project?.dockerConfig?.hostPort || 8080]
-      })
+      description: [this.project?.description || ''],
+      status: [this.project?.status || 'active', [Validators.required]],
+      ownerId: [this.project?.ownerId || 1, [Validators.required]], // Assuming ownerId 1 for now
+      repositories: this.fb.array([])
     });
   }
 
-  private urlValidator(control: FormControl) {
-    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
-    const gitPattern = /^(https?:\/\/)?(git@)?[\w\.-]+[:\\/][\w\.-]+\/[\w\.-]+\.git$/;
+  get repositories(): FormArray {
+    return this.projectForm.get('repositories') as FormArray;
+  }
 
-    if (!control.value) return null;
+  newRepository(): FormGroup {
+    return this.fb.group({
+      name: ['', Validators.required],
+      repositoryUrl: ['', Validators.required],
+      branch: ['main', Validators.required],
+      targetPath: ['', Validators.required],
+      hostId: [null, Validators.required],
+      isDockerEnabled: [false],
+      autoSync: [false],
+      // dockerConfig: this.fb.group({ ... }) // Add if needed
+    });
+  }
 
-    const isValidUrl = urlPattern.test(control.value);
-    const isValidGit = gitPattern.test(control.value);
+  addRepository(): void {
+    this.repositories.push(this.newRepository());
+  }
 
-    return (isValidUrl || isValidGit) ? null : { invalidUrl: true };
+  removeRepository(index: number): void {
+    this.repositories.removeAt(index);
   }
 
   onSubmit(): void {
@@ -73,16 +74,15 @@ export class ProjectFormComponent implements OnInit {
       this.isSubmitting = true;
 
       const formValue = this.projectForm.value;
+      
+      const repositoriesData: Repository[] = formValue.repositories;
+      
       const projectData: Partial<Project> = {
         name: formValue.name,
-        repositoryUrl: formValue.repositoryUrl,
-        branch: formValue.branch,
-        targetPath: formValue.targetPath,
-        hostId: formValue.hostId,
-        responsible: formValue.responsible,
-        autoSync: formValue.autoSync,
-        isDockerEnabled: formValue.isDockerEnabled,
-        dockerConfig: formValue.dockerConfig
+        description: formValue.description,
+        status: formValue.status,
+        ownerId: formValue.ownerId,
+        repositories : repositoriesData
       };
 
       this.formSubmit.emit(projectData);
@@ -103,20 +103,18 @@ export class ProjectFormComponent implements OnInit {
     this.formCancel.emit();
   }
 
-  getFieldError(fieldName: string): string {
-    const field = this.projectForm.get(fieldName);
+  // TODO: Adapt field error functions for FormArray
+  getFieldError(fieldName: string, index: number): string {
+    const field = this.repositories.at(index).get(fieldName);
     if (field?.errors && field.touched) {
-      if (field.errors['required']) return `${fieldName} is required`;
-      if (field.errors['minlength']) return `${fieldName} must be at least ${field.errors['minlength'].requiredLength} characters`;
-      if (field.errors['invalidUrl']) return 'Please enter a valid repository URL';
-      if (field.errors['min']) return `Value must be at least ${field.errors['min'].min}`;
-      if (field.errors['max']) return `Value must be at most ${field.errors['max'].max}`;
+      if (field.errors['required']) return `This field is required`;
+      if (field.errors['minlength']) return `Must be at least ${field.errors['minlength'].requiredLength} characters`;
     }
     return '';
   }
 
-  isFieldInvalid(fieldName: string): boolean {
-    const field = this.projectForm.get(fieldName);
+  isFieldInvalid(fieldName: string, index: number): boolean {
+    const field = this.repositories.at(index).get(fieldName);
     return !!(field?.invalid && field.touched);
   }
 }

@@ -1,15 +1,19 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpService } from './http.service';
-import { Project, ProjectFilter, ApiResponse } from '../models';
+import { Project, ProjectFilter, ApiResponse, ProjectDto } from '../models';
 
 @Injectable({
   providedIn: 'root'
 })
 export class ProjectService {
-  private readonly endpoint = '/projects';
+  private readonly endpoint = '/api/v1/project';
 
   constructor(private http: HttpService) {}
+
+  getProjectsWithDetails(): Observable<ProjectDto[]> {
+    return this.http.get<ProjectDto[]>(`${this.endpoint}/details`);
+  }
 
   // Get all projects with optional filtering
   getProjects(filter?: ProjectFilter): Observable<ApiResponse<Project[]>> {
@@ -32,7 +36,7 @@ export class ProjectService {
 
   // Get project by ID
   getProject(id: string): Observable<ApiResponse<Project>> {
-    return this.http.get<ApiResponse<Project>>(`${this.endpoint}/${id}`);
+    return this.http.get<ApiResponse<Project>>(`${this.endpoint}/details/${id}`);
   }
 
   // Create new project
@@ -150,4 +154,3 @@ export class ProjectService {
     });
   }
 }
-

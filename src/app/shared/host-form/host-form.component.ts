@@ -2,6 +2,8 @@ import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Host } from '../../core/models';
+import { HostService } from '../../core/services/host.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-host-form',
@@ -14,7 +16,7 @@ export class HostFormComponent implements OnInit {
   @Input() host: Host | null = null;
   @Input() isEditMode: boolean = false;
   @Input() showActions: boolean = true;
-  @Output() formSubmit = new EventEmitter<Partial<Host>>();
+  @Output() formSubmit = new EventEmitter<Host>();
   @Output() formCancel = new EventEmitter<void>();
 
   hostForm: FormGroup;
@@ -23,7 +25,7 @@ export class HostFormComponent implements OnInit {
   operatingSystems = [
     { value: 'Windows', label: 'Windows' },
     { value: 'Linux', label: 'Linux' },
-    { value: 'MacOS', label: 'macOS' }
+    { value: 'MacOS', label: 'MacOS' }
   ];
 
   architectures = [
@@ -33,7 +35,10 @@ export class HostFormComponent implements OnInit {
     { value: 'arm', label: 'ARM' }
   ];
 
-  constructor(private fb: FormBuilder) {
+  constructor(
+    private fb: FormBuilder,
+    private hostService: HostService
+  ) {
     this.hostForm = this.createForm();
   }
 
@@ -51,7 +56,7 @@ export class HostFormComponent implements OnInit {
       architecture: ['', Validators.required],
       description: ['', Validators.maxLength(500)],
       location: ['', Validators.maxLength(100)],
-      port: [22, [Validators.required, Validators.min(1), Validators.max(65535)]],
+      port: [5643, [Validators.required, Validators.min(1), Validators.max(65535)]],
       isActive: [true]
     });
   }
@@ -65,7 +70,7 @@ export class HostFormComponent implements OnInit {
         architecture: this.host.architecture,
         description: this.host.description || '',
         location: this.host.location || '',
-        port: this.host.port || 22,
+        port: this.host.port || 5643,
         isActive: this.host.isActive
       });
     }
@@ -74,24 +79,26 @@ export class HostFormComponent implements OnInit {
   onSubmit() {
     if (this.hostForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
-      
-      const formValue = this.hostForm.value;
-      const hostData: Partial<Host> = {
-        name: formValue.name,
-        ipAddress: formValue.ipAddress,
-        operatingSystem: formValue.operatingSystem,
-        architecture: formValue.architecture,
-        description: formValue.description,
-        location: formValue.location,
-        port: formValue.port,
-        isActive: formValue.isActive
-      };
+      const hostData: Partial<Host> = this.hostForm.value;
 
-      this.formSubmit.emit(hostData);
-      
-      setTimeout(() => {
-        this.isSubmitting = false;
-      }, 1000);
+      let submissionObservable: Observable<any>;
+
+      if (this.isEditMode && this.host) {
+        submissionObservable = this.hostService.updateHost(this.host.id, hostData);
+      } else {
+        submissionObservable = this.hostService.createHost(hostData);
+      }
+
+      submissionObservable.subscribe({
+        next: (response) => {
+          this.isSubmitting = false;
+          this.formSubmit.emit(response.data);
+        },
+        error: (error) => {
+          this.isSubmitting = false;
+          console.error('API Error:', error);
+        }
+      });
     } else {
       this.markFormGroupTouched();
     }
@@ -105,6 +112,11 @@ export class HostFormComponent implements OnInit {
     this.hostForm.reset();
     if (this.host && this.isEditMode) {
       this.populateForm();
+    } else {
+        this.hostForm.patchValue({
+            port: 5643,
+            isActive: true
+        });
     }
   }
 

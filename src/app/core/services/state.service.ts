@@ -85,7 +85,7 @@ export class StateService {
 
   removeProject(projectId: string): void {
     const currentProjects = this.stateSubject.value.projects;
-    const projects = currentProjects.filter(project => project.id !== projectId);
+    const projects = currentProjects.filter(project => project.id !== +projectId);
     this.updateState({ projects });
   }
 

@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ProjectFormComponent } from '../../../shared/project-form/project-form.component';
-import { Project, Host } from '../../../core/models';
+import { Project, Host, ApiResponse } from '../../../core/models';
 import { ProjectService, HostService } from '../../../core/services';
 
 @Component({
@@ -28,10 +28,10 @@ export class ProjectAddComponent implements OnInit {
 
   private loadHosts(): void {
     this.hostService.getHosts().subscribe({
-      next: (hosts) => {
-        this.hosts = hosts.filter((host: Host) => host.isActive);
+      next: (response: Host[]) => {
+        this.hosts = response.filter((host: Host) => host.isActive);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading hosts:', error);
       }
     });
@@ -45,7 +45,7 @@ export class ProjectAddComponent implements OnInit {
         console.log('Project created successfully:', project);
         this.router.navigate(['/projects']);
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error creating project:', error);
         this.isLoading = false;
       }
@@ -56,4 +56,3 @@ export class ProjectAddComponent implements OnInit {
     this.router.navigate(['/projects']);
   }
 }
-

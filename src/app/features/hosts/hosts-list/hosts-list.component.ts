@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { HostFormComponent } from '../../../shared/host-form/host-form.component';
-import { Host } from '../../../core/models';
+import { Host, ApiResponse } from '../../../core/models';
 import { HostService } from '../../../core/services';
 
 interface HostFilter {
@@ -34,7 +34,7 @@ export class HostsListComponent implements OnInit {
   operatingSystems: string[] = [];
   architectures: string[] = [];
   
-  selectedHosts: Set<string> = new Set();
+  selectedHosts: Set<number> = new Set();
   isLoading = false;
 
   // Modal states
@@ -51,13 +51,13 @@ export class HostsListComponent implements OnInit {
   loadHosts(): void {
     this.isLoading = true;
     this.hostService.getHosts().subscribe({
-      next: (hosts: Host[]) => {
-        this.hosts = hosts;
+      next: (response: Host[]) => {
+        this.hosts = response;
         this.extractFilterOptions();
         this.applyFilters();
         this.isLoading = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading hosts:', error);
         this.isLoading = false;
       }
@@ -95,11 +95,10 @@ export class HostsListComponent implements OnInit {
   }
 
   toggleHostSelection(hostId: number): void {
-    const hostIdStr = hostId.toString();
-    if (this.selectedHosts.has(hostIdStr)) {
-      this.selectedHosts.delete(hostIdStr);
+    if (this.selectedHosts.has(hostId)) {
+      this.selectedHosts.delete(hostId);
     } else {
-      this.selectedHosts.add(hostIdStr);
+      this.selectedHosts.add(hostId);
     }
   }
 
@@ -108,7 +107,7 @@ export class HostsListComponent implements OnInit {
       this.selectedHosts.clear();
     } else {
       this.selectedHosts.clear();
-      this.filteredHosts.forEach(host => this.selectedHosts.add(host.id.toString()));
+      this.filteredHosts.forEach(host => this.selectedHosts.add(host.id));
     }
   }
 
@@ -149,18 +148,18 @@ export class HostsListComponent implements OnInit {
             this.loadHosts();
             this.closeCreateModal();
         },
-        error: (error) => console.error('Error creating host:', error)
+        error: (error: any) => console.error('Error creating host:', error)
     });
   }
 
   onHostUpdate(hostData: Partial<Host>): void {
     if (this.editingHost) {
-        this.hostService.updateHost(this.editingHost.id.toString(), hostData).subscribe({
+        this.hostService.updateHost(this.editingHost.id, hostData).subscribe({
             next: () => {
                 this.loadHosts();
                 this.closeEditModal();
             },
-            error: (error) => console.error('Error updating host:', error)
+            error: (error: any) => console.error('Error updating host:', error)
         });
     }
   }
@@ -176,11 +175,11 @@ export class HostsListComponent implements OnInit {
 
   deleteHost(host: Host): void {
     if (confirm(`Are you sure you want to delete host "${host.name}"?`)) {
-        this.hostService.deleteHost(host.id.toString()).subscribe({
+        this.hostService.deleteHost(host.id).subscribe({
             next: () => {
                 this.loadHosts();
             },
-            error: (error) => console.error('Error deleting host:', error)
+            error: (error: any) => console.error('Error deleting host:', error)
         });
     }
   }
@@ -194,7 +193,7 @@ export class HostsListComponent implements OnInit {
             selectedHostsList.forEach(hostId => {
                 this.hostService.deleteHost(hostId).subscribe({
                     next: () => this.loadHosts(),
-                    error: (error) => console.error(`Error deleting host ${hostId}:`, error)
+                    error: (error: any) => console.error(`Error deleting host ${hostId}:`, error)
                 });
             });
             this.selectedHosts.clear();

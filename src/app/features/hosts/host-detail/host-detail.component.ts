@@ -96,7 +96,7 @@ export class HostDetailComponent implements OnInit, OnDestroy {
         };
        
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error loading host details:', error);
        
       }

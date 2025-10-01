@@ -1,0 +1,282 @@
+<div class="space-y-6" *ngIf="!isLoading && project && !error">
+  <!-- Page Header -->
+  <div class="flex items-center justify-between">
+    <div class="flex items-center space-x-4">
+      <a routerLink="/projects" 
+         class="p-2 text-secondary-400 hover:text-secondary-600 transition-colors duration-150">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+        </svg>
+      </a>
+      <div class="flex-1">
+        <div class="flex items-center space-x-3">
+          <h1 class="text-2xl font-bold text-secondary-900">{{ project.name }}</h1>
+          <span class="px-2 py-1 text-xs font-medium rounded-full {{ getStatusColor(project.status) }}">
+            {{project.status}}
+          </span>
+        </div>
+        <p class="text-secondary-600 mt-1">{{ project.description }}</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-3">
+      <button (click)="editProject()" 
+              class="btn-secondary flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        <span>Edit</span>
+      </button>
+      <button (click)="deployProject()" 
+              class="btn-primary flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
+        </svg>
+        <span>Deploy</span>
+      </button>
+      <button (click)="refreshProjectData()" 
+              [disabled]="isLoading"
+              class="btn-secondary flex items-center space-x-2">
+        <svg class="w-4 h-4" [class.animate-spin]="isLoading" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Project Overview -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Project Information -->
+    <div class="lg:col-span-2">
+      <div class="card">
+        <h3 class="text-lg font-semibold text-secondary-900 mb-4">Project Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-secondary-600">Created At</span>
+              <span class="font-medium">{{ project.createdAt | date:'medium' }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-secondary-600">Owner</span>
+              <span class="font-medium">{{ project.ownerName || 'User #' + project.ownerId }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-secondary-600">Project ID</span>
+              <span class="font-medium">#{{ project.id }}</span>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <div class="flex justify-between">
+              <span class="text-secondary-600">Repositories</span>
+              <span class="font-medium">{{ project.repositories.length || 0 }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-secondary-600">Status</span>
+              <span class="px-2 py-1 text-xs font-medium rounded-full {{ getStatusColor(project.status) }}">
+                {{ project.status }}
+              </span>
+            </div>
+            <div class="flex justify-between" *ngIf="project.repositories.length > 0">
+              <span class="text-secondary-600">Docker Enabled</span>
+              <span class="font-medium">{{ getDockerEnabledCount() }} / {{ project.repositories.length }}</span>
+            </div>
+            <div class="flex justify-between" *ngIf="project.repositories.length > 0">
+              <span class="text-secondary-600">Auto Sync</span>
+              <span class="font-medium">{{ getAutoSyncCount() }} / {{ project.repositories.length }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="card">
+      <h3 class="text-lg font-semibold text-secondary-900 mb-4">Quick Actions</h3>
+      <div class="space-y-3">
+        <button (click)="cloneRepository(0)" 
+                class="w-full btn-secondary flex items-center justify-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+          </svg>
+          <span>Clone All Repos</span>
+        </button>
+        <button (click)="syncRepository(0)" 
+                class="w-full btn-secondary flex items-center justify-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          <span>Sync All Repos</span>
+        </button>
+        <button class="w-full btn-secondary flex items-center justify-center space-x-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+          <span>View Analytics</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Repositories -->
+  <div class="card">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-secondary-900">Linked Repositories</h3>
+      <button (click)="openAddRepositoryModal()" class="btn-primary text-sm">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        Add Repository
+      </button>
+    </div>
+    
+    <div class="space-y-4" *ngIf="project.repositories.length > 0; else noRepos">
+      <div *ngFor="let repo of project.repositories" 
+           class="border border-secondary-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+        <div class="flex items-start justify-between">
+          <div class="flex-1">
+            <div class="flex items-center space-x-3 mb-2">
+              <h4 class="font-semibold text-secondary-900">{{ repo.name }}</h4>
+              <span class="px-2 py-1 text-xs font-medium rounded-full {{ getRepositoryStatusColor(repo.status) }}">
+                {{ getRepositoryStatusText(repo.status) }}
+              </span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-secondary-600">
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+                <a [href]="repo.repositoryUrl" target="_blank" class="hover:text-primary-600 truncate">{{ repo.repositoryUrl }}</a>
+              </div>
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+                <span>Branch: <strong>{{ repo.branch }}</strong></span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                </svg>
+                <span>Path: {{ repo.targetPath }}</span>
+              </div>
+              <div class="flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                </svg>
+                <span>Host ID: {{ repo.hostId }}</span>
+              </div>
+            </div>
+            <div class="mt-3 space-y-1 text-xs text-secondary-500">
+              <div *ngIf="repo.lastSync">
+                <span class="font-medium">Last sync:</span> {{ repo.lastSync | date:'medium' }}
+              </div>
+              <div *ngIf="repo.lastClone">
+                <span class="font-medium">Last clone:</span> {{ repo.lastClone | date:'medium' }}
+              </div>
+              <div *ngIf="repo.lastPush">
+                <span class="font-medium">Last push:</span> {{ repo.lastPush | date:'medium' }}
+              </div>
+              <div *ngIf="repo.lastCommitHash">
+                <span class="font-medium">Last commit:</span> {{ repo.lastCommitHash.substring(0, 8) }}
+              </div>
+              <div class="flex items-center space-x-4">
+                <span *ngIf="repo.autoSync" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                  </svg>
+                  Auto Sync
+                </span>
+                <span *ngIf="repo.isDockerEnabled" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-purple-100 text-purple-800">
+                  <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14m-14 0a2 2 0 01-2-2V9a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2"/>
+                  </svg>
+                  Docker
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 ml-4">
+            <button (click)="openEditRepositoryModal(repo)" 
+                    class="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                    title="Edit Repository">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            </button>
+            <button (click)="cloneRepository(repo.id)" 
+                    class="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                    title="Clone Repository">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+              </svg>
+            </button>
+            <button (click)="syncRepository(repo.id)" 
+                    class="p-2 text-secondary-400 hover:text-primary-600 transition-colors"
+                    title="Sync Repository">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+            </button>
+            <button (click)="deleteRepository(repo)" 
+                    class="p-2 text-secondary-400 hover:text-red-600 transition-colors"
+                    title="Delete Repository">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template #noRepos>
+      <div class="text-center py-8">
+        <svg class="w-12 h-12 text-secondary-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2a2 2 0 002 2m0 0h14m-14 0a2 2 0 01-2-2V9a2 2 0 012-2h14a2 2 0 012 2v2a2 2 0 01-2 2"/>
+        </svg>
+        <p class="text-secondary-600 mb-4">No repositories linked to this project yet.</p>
+        <button (click)="openAddRepositoryModal()" class="btn-primary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Add First Repository
+        </button>
+      </div>
+    </ng-template>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div *ngIf="isLoading" class="flex items-center justify-center py-12">
+  <div class="text-center">
+    <svg class="animate-spin h-8 w-8 text-primary-600 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+    <p class="text-secondary-600">Loading project details...</p>
+  </div>
+</div>
+
+<!-- Error State -->
+<div *ngIf="!isLoading && error" class="flex items-center justify-center py-12">
+  <div class="text-center">
+    <svg class="w-12 h-12 text-red-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <h3 class="text-lg font-semibold text-secondary-900 mb-2">Failed to Load Project</h3>
+    <p class="text-secondary-600 mb-4">{{ error }}</p>
+    <button (click)="refreshProjectData()" class="btn-primary">
+      Try Again
+    </button>
+  </div>
+</div>
+
+<!-- Repository Form Modal -->
+<app-repository-form-modal
+  [isOpen]="isRepositoryModalOpen"
+  [repository]="editingRepository"
+  [projectId]="project?.id || 0"
+  [hosts]="hosts"
+  (save)="onRepositorySave($event)"
+  (cancel)="closeRepositoryModal()">
+</app-repository-form-modal>

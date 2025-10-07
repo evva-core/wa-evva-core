@@ -1,7 +1,7 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ProjectDetails, Repository, RepositoryStatus, Host, ProjectStatus } from '../../../core/models';
+import { ProjectDetails, Repository, RepositoryStatus, Host, ProjectStatus, ProjectWorkflow } from '../../../core/models';
 import { ProjectService } from '../../../core/services/project.service';
 import { RepositoryService } from '../../../core/services/repository.service';
 import { HostService } from '../../../core/services/host.service';
@@ -19,6 +19,7 @@ export class ProjectDetailsComponent implements OnInit {
   project: ProjectDetails | null = null;
   error: string | null = null;
   hosts: Host[] = [];
+  workflows: ProjectWorkflow[] = [];
   
   // Modal state
   isRepositoryModalOpen = false;
@@ -37,6 +38,7 @@ export class ProjectDetailsComponent implements OnInit {
     if (projectId) {
       this.loadProjectDetails(projectId);
       this.loadHosts();
+      this.loadProjectWorkflows(projectId);
     }
   }
 
@@ -64,6 +66,7 @@ export class ProjectDetailsComponent implements OnInit {
   refreshProjectData(): void {
     if (this.project) {
       this.loadProjectDetails(this.project.id.toString());
+      this.loadProjectWorkflows(this.project.id.toString());
     }
   }
 
@@ -224,5 +227,22 @@ export class ProjectDetailsComponent implements OnInit {
     if (this.repositoryModal) {
       this.repositoryModal.onSaveComplete();
     }
+  }
+
+  loadProjectWorkflows(projectId: string): void {
+    this.projectService.getProjectWorkflows(projectId).subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.workflows = response.data;
+        }
+      },
+      error: (err) => {
+        console.error('Error loading project workflows:', err);
+      }
+    });
+  }
+
+  trackByWorkflowId(index: number, workflow: ProjectWorkflow): number {
+    return workflow.id;
   }
 }

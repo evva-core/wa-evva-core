@@ -49,7 +49,7 @@ export interface DetailedHost extends Host {
   networkInfo: NetworkInfo;
 }
 
-//Virá do cb-agent
+
 export interface Process {
   id: number;
   name: string;
@@ -57,7 +57,7 @@ export interface Process {
   memoryUsageMB: number;
   cpuUsage: number;
 }
-//Virá do cb-agent
+
 export interface Service {
   id: string;
   name: string;
@@ -107,6 +107,20 @@ export type ProjectStatus = 'Active' | 'Archived' | 'Online';
 export interface ProjectDetails extends Project {
   ownerName: string;
   repositories: Repository[];
+  workflows?: ProjectWorkflow[];
+}
+
+export interface ProjectWorkflow {
+  id: number;
+  workflowId: number;
+  executionOrder: number;
+  stageName?: string;
+  workflow: {
+    id: number;
+    name: string;
+    description?: string;
+    command: string;
+  };
 }
 
 export interface ProjectDto {

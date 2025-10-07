@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpService } from './http.service';
-import { Project, ProjectFilter, ApiResponse, ProjectDto } from '../models';
+import { Project, ProjectFilter, ApiResponse, ProjectDto, ProjectWorkflow } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -37,6 +37,11 @@ export class ProjectService {
   // Get project by ID
   getProject(id: string): Observable<ApiResponse<Project>> {
     return this.http.get<ApiResponse<Project>>(`${this.endpoint}/details/${id}`);
+  }
+
+  // Get project workflows
+  getProjectWorkflows(projectId: string): Observable<ApiResponse<ProjectWorkflow[]>> {
+    return this.http.get<ApiResponse<ProjectWorkflow[]>>(`/api/v1/projectworkflow/project/${projectId}`);
   }
 
   // Create new project

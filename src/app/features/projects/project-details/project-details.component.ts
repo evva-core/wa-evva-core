@@ -5,12 +5,14 @@ import { ProjectDetails, Repository, RepositoryStatus, Host, ProjectStatus, Proj
 import { ProjectService } from '../../../core/services/project.service';
 import { RepositoryService } from '../../../core/services/repository.service';
 import { HostService } from '../../../core/services/host.service';
+import { ProjectSignalrService } from '../../../core/services/project-signalr.service';
 import { RepositoryFormModalComponent } from './repository-form-modal.component';
+import { WorkflowBuilderModalComponent } from './workflow-builder-modal/workflow-builder-modal.component';
 
 @Component({
   selector: 'app-project-details',
   standalone: true,
-  imports: [CommonModule, RouterLink, RepositoryFormModalComponent],
+  imports: [CommonModule, RouterLink, RepositoryFormModalComponent, WorkflowBuilderModalComponent],
   templateUrl: './project-details.component.html',
   
 })
@@ -20,22 +22,29 @@ export class ProjectDetailsComponent implements OnInit {
   error: string | null = null;
   hosts: Host[] = [];
   workflows: ProjectWorkflow[] = [];
+  isDeploying = false;
+  deploymentLogs: string[] = [];
   
   // Modal state
   isRepositoryModalOpen = false;
   editingRepository: Repository | null = null;
   @ViewChild(RepositoryFormModalComponent) repositoryModal!: RepositoryFormModalComponent;
+  
+  // Workflow builder modal state
+  isWorkflowBuilderOpen = false;
 
   constructor(
     private route: ActivatedRoute,
     private projectService: ProjectService,
     private repositoryService: RepositoryService,
-    private hostService: HostService
+    private hostService: HostService,
+    private projectSignalR: ProjectSignalrService
   ) { }
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const projectId = this.route.snapshot.paramMap.get('id');
     if (projectId) {
+      await this.setupSignalR(parseInt(projectId));
       this.loadProjectDetails(projectId);
       this.loadHosts();
       this.loadProjectWorkflows(projectId);
@@ -113,7 +122,16 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   cloneRepository(repoId: number): void {
-    console.log('Clone repository:', repoId);
+    this.repositoryService.cloneRepository(repoId).subscribe({
+      next: (response) => {
+        if (response.success) {
+          console.log('Clone started for repository:', repoId);
+        }
+      },
+      error: (err) => {
+        console.error('Error starting clone:', err);
+      }
+    });
   }
 
   syncRepository(repoId: number): void {
@@ -121,7 +139,13 @@ export class ProjectDetailsComponent implements OnInit {
   }
 
   deployProject(): void {
-    console.log('Deploy project:', this.project?.id);
+    if (!this.project) return;
+    
+    this.projectSignalR.startDeploy(this.project.id).then(() => {
+      console.log('Deploy started for project:', this.project?.id);
+    }).catch(error => {
+      console.error('Error starting deploy:', error);
+    });
   }
 
   editProject(): void {
@@ -242,7 +266,104 @@ export class ProjectDetailsComponent implements OnInit {
     });
   }
 
+  async setupSignalR(projectId: number): Promise<void> {
+    try {
+      await this.projectSignalR.startConnection();
+      await this.projectSignalR.joinProjectGroup(projectId);
+      
+      this.projectSignalR.repositoryStatus$.subscribe(status => {
+        this.handleRepositoryStatusUpdate(status);
+      });
+
+      this.projectSignalR.deploymentStatus$.subscribe(status => {
+        this.handleDeploymentStatusUpdate(status);
+      });
+    } catch (error) {
+      console.error('Error setting up SignalR:', error);
+    }
+  }
+
+  handleRepositoryStatusUpdate(status: any): void {
+    const repo = this.project?.repositories.find(r => r.id === status.repositoryId);
+    if (repo) {
+      switch (status.type) {
+        case 'clone_started':
+          repo.status = RepositoryStatus.Cloning;
+          break;
+        case 'clone_completed':
+          repo.status = RepositoryStatus.Cloned;
+          break;
+        case 'clone_failed':
+          repo.status = RepositoryStatus.Failed;
+          break;
+      }
+    }
+  }
+
+  handleDeploymentStatusUpdate(status: any): void {
+    console.log('Deployment status update:', status);
+    
+    switch (status.type) {
+      case 'deployment_started':
+        this.isDeploying = true;
+        this.deploymentLogs = [`Deployment started for project ${status.projectId}`];
+        console.log(`Deployment started for project ${status.projectId}`);
+        break;
+      case 'deployment_progress':
+        const logMessage = `[${status.stage}] ${status.message}`;
+        this.deploymentLogs.push(logMessage);
+        console.log(`Deployment progress: ${status.stage} - ${status.message}`);
+        break;
+      case 'deployment_completed':
+        this.isDeploying = false;
+        const completionMessage = `Deployment ${status.success ? 'completed successfully' : 'failed'}: ${status.message || ''}`;
+        this.deploymentLogs.push(completionMessage);
+        console.log(`Deployment completed for project ${status.projectId}. Success: ${status.success}`);
+        break;
+      case 'deployment_error':
+        this.isDeploying = false;
+        this.deploymentLogs.push(`Error: ${status.error}`);
+        console.error(`Deployment error for project ${status.projectId}: ${status.error}`);
+        break;
+    }
+  }
+
   trackByWorkflowId(index: number, workflow: ProjectWorkflow): number {
     return workflow.id;
+  }
+
+  openWorkflowBuilder(): void {
+    this.isWorkflowBuilderOpen = true;
+  }
+
+  closeWorkflowBuilder(): void {
+    this.isWorkflowBuilderOpen = false;
+  }
+
+  onWorkflowSave(workflowSteps: any[]): void {
+    if (!this.project) return;
+    
+    const projectWorkflows = workflowSteps.map(step => ({
+      id: step.id || 0,
+      projectId: this.project!.id,
+      workflowId: step.workflowId,
+      executionOrder: step.executionOrder,
+      stageName: step.stageName || null,
+      workflow: step.workflow
+    }));
+
+    const request = { workflows: projectWorkflows };
+
+    this.projectService.saveProjectWorkflows(this.project.id.toString(), request).subscribe({
+      next: (response) => {
+        if (response.success) {
+          this.loadProjectWorkflows(this.project!.id.toString());
+          this.closeWorkflowBuilder();
+        }
+      },
+      error: (err) => {
+        console.error('Error saving workflows:', err);
+      }
+    });
   }
 }

@@ -1,0 +1,70 @@
+/* Workflow Builder Modal Styles */
+
+.workflow-canvas {
+  background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.workflow-step {
+  transition: all 0.2s ease-in-out;
+}
+
+.workflow-step:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.workflow-step.selected {
+  box-shadow: 0 0 0 2px #3b82f6;
+}
+
+.drag-handle {
+  cursor: grab;
+}
+
+.drag-handle:active {
+  cursor: grabbing;
+}
+
+.form-field {
+  transition: border-color 0.15s ease-in-out;
+}
+
+.form-field:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.json-editor {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.loading-spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .workflow-step {
+    width: 200px;
+    max-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-step {
+    width: 180px;
+    max-width: 180px;
+  }
+}

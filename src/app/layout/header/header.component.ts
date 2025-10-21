@@ -1,7 +1,6 @@
 import { Component, OnInit, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { WebSocketService } from '../../core/services/websocket.service';
 
 @Component({
   selector: 'app-header',
@@ -35,12 +34,8 @@ export class HeaderComponent implements OnInit {
     { label: 'About', icon: 'info', action: 'about' }
   ];
 
-  constructor(private wsService: WebSocketService) {}
-
   ngOnInit(): void {
-    this.wsService.getConnectionStatus().subscribe(status => {
-      this.isConnected = status;
-    });
+
   }
 
   toggleQuickActions(): void {

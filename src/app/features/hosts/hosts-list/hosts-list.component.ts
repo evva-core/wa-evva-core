@@ -51,8 +51,8 @@ export class HostsListComponent implements OnInit {
   loadHosts(): void {
     this.isLoading = true;
     this.hostService.getHosts().subscribe({
-      next: (response: Host[]) => {
-        this.hosts = response;
+      next: (response: any) => {
+        this.hosts = response.data;
         this.extractFilterOptions();
         this.applyFilters();
         this.isLoading = false;

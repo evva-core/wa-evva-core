@@ -27,11 +27,17 @@
         <span>Edit</span>
       </button>
       <button (click)="deployProject()" 
-              class="btn-primary flex items-center space-x-2">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              [disabled]="isDeploying"
+              [class]="isDeploying ? 'btn-primary opacity-50 cursor-not-allowed' : 'btn-primary'"
+              class="flex items-center space-x-2">
+        <svg *ngIf="!isDeploying" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
         </svg>
-        <span>Deploy</span>
+        <svg *ngIf="isDeploying" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>{{ isDeploying ? 'Deploying...' : 'Deploy' }}</span>
       </button>
       <button (click)="refreshProjectData()" 
               [disabled]="isLoading"
@@ -245,16 +251,31 @@
     </ng-template>
   </div>
 
+  <!-- Deployment Logs -->
+  <div class="card" *ngIf="deploymentLogs.length > 0">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-lg font-semibold text-secondary-900">Deployment Logs</h3>
+      <button (click)="deploymentLogs = []" class="text-sm text-secondary-500 hover:text-secondary-700">
+        Clear Logs
+      </button>
+    </div>
+    <div class="bg-gray-900 text-green-400 p-4 rounded-lg font-mono text-sm max-h-64 overflow-y-auto">
+      <div *ngFor="let log of deploymentLogs" class="mb-1">
+        {{ log }}
+      </div>
+    </div>
+  </div>
+
   <!-- Workflows -->
   <div class="card">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-lg font-semibold text-secondary-900">Workflow Steps</h3>
-      <a [routerLink]="['/workflow/project', project.id]" class="btn-primary text-sm flex items-center">
+      <button (click)="openWorkflowBuilder()" class="btn-primary text-sm flex items-center">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
         </svg>
-        Manage Workflows
-      </a>
+        Workflow Builder
+      </button>
     </div>
     
     <div class="space-y-3" *ngIf="workflows && workflows.length > 0; else noWorkflows">
@@ -282,12 +303,12 @@
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
         </svg>
         <p class="text-secondary-600 mb-4">No workflow steps configured for this project.</p>
-        <a [routerLink]="['/workflow/project', project.id]" class="btn-primary flex items-center max-w-[250px] flex justify-center">
+        <button (click)="openWorkflowBuilder()" class="btn-primary flex items-center max-w-[250px] flex justify-center">
           <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
           </svg>
           Configure Workflows
-        </a>
+        </button>
       </div>
     </ng-template>
   </div>
@@ -327,3 +348,12 @@
   (save)="onRepositorySave($event)"
   (cancel)="closeRepositoryModal()">
 </app-repository-form-modal>
+
+<!-- Workflow Builder Modal -->
+<app-workflow-builder-modal
+  [isOpen]="isWorkflowBuilderOpen"
+  [projectId]="project?.id || 0"
+  [existingWorkflows]="workflows"
+  (saveWorkflows)="onWorkflowSave($event)"
+  (cancel)="closeWorkflowBuilder()">
+</app-workflow-builder-modal>

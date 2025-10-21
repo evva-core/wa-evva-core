@@ -44,6 +44,11 @@ export class ProjectService {
     return this.http.get<ApiResponse<ProjectWorkflow[]>>(`/api/v1/projectworkflow/project/${projectId}`);
   }
 
+  // Save project workflows
+  saveProjectWorkflows(projectId: string, request: any): Observable<ApiResponse<void>> {
+    return this.http.post<ApiResponse<void>>(`/api/v1/projectworkflow/project/${projectId}/bulk`, request);
+  }
+
   // Create new project
   createProject(project: Partial<Project>): Observable<ApiResponse<Project>> {
     return this.http.post<ApiResponse<Project>>(this.endpoint, project);

@@ -22,4 +22,8 @@ export class RepositoryService {
   deleteRepository(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.endpoint}/${id}`);
   }
+
+  cloneRepository(id: number): Observable<ApiResponse<any>> {
+    return this.http.post<ApiResponse<any>>(`${this.endpoint}/${id}/clone`, {});
+  }
 }

@@ -1,0 +1,209 @@
+<div *ngIf="isOpen" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div class="bg-white rounded-lg shadow-xl w-full max-w-7xl xl:max-w-full xl:mx-8 h-full max-h-[90vh] flex flex-col">
+    <!-- Header -->
+    <div class="flex items-center justify-between p-6 border-b">
+      <h2 class="text-xl font-semibold text-secondary-900">Workflow Builder</h2>
+      <button (click)="close()" class="text-secondary-400 hover:text-secondary-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="flex-1 flex flex-col lg:flex-row min-h-0">
+      <!-- Workflow Canvas -->
+      <div class="flex-1 relative bg-gray-50 overflow-hidden min-h-96 lg:min-h-0">
+        <div class="absolute inset-0 p-4">
+          <div class="w-full h-full relative" 
+               (click)="onCanvasClick($event)"
+               (mousemove)="onMouseMove($event)"
+               (mouseup)="stopDrag()"
+               (mouseleave)="stopDrag()"
+               style="background-image: radial-gradient(circle, #e5e7eb 1px, transparent 1px); background-size: 20px 20px;">
+            
+            <!-- Workflow Steps -->
+            <div *ngFor="let step of workflowSteps; trackBy: trackByStepId"
+                 class="absolute cursor-move transform -translate-x-1/2 -translate-y-1/2 select-none"
+                 [style.left.px]="step.x"
+                 [style.top.px]="step.y"
+                 (mousedown)="startDrag(step, $event)"
+                 (click)="selectStep(step, $event)"
+                 [class.ring-2]="selectedStep?.id === step.id"
+                 [class.ring-primary-500]="selectedStep?.id === step.id"
+                 [class.z-10]="selectedStep?.id === step.id">
+              
+              <!-- Step Node -->
+              <div class="bg-white border-2 border-secondary-300 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow w-56 max-w-56">
+                <div class="flex items-center space-x-2 mb-2">
+                  <div class="flex items-center justify-center w-6 h-6 bg-primary-100 text-primary-600 rounded-full text-xs font-medium flex-shrink-0">
+                    {{ step.executionOrder }}
+                  </div>
+                  <h4 class="font-medium text-secondary-900 text-sm leading-tight break-words">{{ step.workflow.name }}</h4>
+                </div>
+                <p class="text-xs text-secondary-600 mb-2 leading-relaxed break-words" *ngIf="step.workflow.description && step.workflow.description.length > 0">
+                  {{ step.workflow.description.length > 80 ? (step.workflow.description | slice:0:80) + '...' : step.workflow.description }}
+                </p>
+                <div class="text-xs mb-2">
+                  <code class="bg-gray-100 px-2 py-1 rounded text-xs break-all block">{{ step.workflow.command }}</code>
+                </div>
+                <div class="text-xs text-secondary-500" *ngIf="step.stageName">
+                  <span class="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                    {{ step.stageName }}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="workflowSteps.length === 0" 
+                 class="absolute inset-0 flex items-center justify-center">
+              <div class="text-center">
+                <svg class="w-16 h-16 text-secondary-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+                <h3 class="text-lg font-medium text-secondary-900 mb-2">No Workflow Steps</h3>
+                <p class="text-secondary-600 mb-4">Add workflows from the sidebar to build your deployment pipeline</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="w-80 lg:w-96 xl:w-80 border-l bg-white flex flex-col flex-shrink-0">
+        <!-- Available Workflows -->
+        <div class="p-4 border-b">
+          <h3 class="font-medium text-secondary-900 mb-3">Available Workflows</h3>
+          <div class="space-y-2 max-h-48 lg:max-h-64 xl:max-h-80 overflow-y-auto">
+            <div *ngIf="isLoadingWorkflows" class="text-center py-4">
+              <div class="animate-spin h-6 w-6 border-2 border-primary-600 border-t-transparent rounded-full mx-auto"></div>
+              <p class="text-sm text-secondary-600 mt-2">Loading workflows...</p>
+            </div>
+            <div *ngIf="!isLoadingWorkflows && availableWorkflows.length === 0" class="text-center py-4">
+              <p class="text-sm text-secondary-600">No workflows available</p>
+            </div>
+            <div *ngFor="let workflow of availableWorkflows" 
+                 class="p-3 border border-secondary-200 rounded-lg cursor-pointer hover:bg-secondary-50 transition-colors"
+                 (click)="addWorkflowStep(workflow)">
+              <h4 class="font-medium text-secondary-900 text-sm leading-tight break-words">{{ workflow.name }}</h4>
+              <p class="text-xs text-secondary-600 mt-1 leading-relaxed break-words" *ngIf="workflow.description">
+                {{ workflow.description.length > 60 ? (workflow.description | slice:0:60) + '...' : workflow.description }}
+              </p>
+              <code class="text-xs bg-gray-100 px-2 py-1 rounded mt-2 block break-all">{{ workflow.command }}</code>
+              <div class="flex items-center justify-between mt-2">
+                <span class="text-xs text-secondary-500 bg-secondary-100 px-2 py-1 rounded-full">
+                  {{ workflow.supportedOs }}
+                </span>
+                <svg class="w-4 h-4 text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Details -->
+        <div class="flex-1 p-4 overflow-y-auto" *ngIf="selectedStep">
+          <h3 class="font-medium text-secondary-900 mb-3">Step Details</h3>
+          <div class="space-y-4">
+            <!-- Basic Step Info -->
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm font-medium text-secondary-700 mb-1">Execution Order</label>
+                <input type="number" 
+                       [(ngModel)]="selectedStep.executionOrder"
+                       (change)="updateStepOrder()"
+                       class="w-full px-3 py-2 border border-secondary-300 rounded-md text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-secondary-700 mb-1">Stage Name</label>
+                <input type="text" 
+                       [(ngModel)]="selectedStep.stageName"
+                       placeholder="Optional stage name"
+                       class="w-full px-3 py-2 border border-secondary-300 rounded-md text-sm">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-secondary-700 mb-1">Workflow</label>
+                <div class="p-3 bg-secondary-50 rounded-md">
+                  <h4 class="font-medium text-sm">{{ selectedStep.workflow.name }}</h4>
+                  <p class="text-xs text-secondary-600 mt-1">{{ selectedStep.workflow.description }}</p>
+                  <code class="text-xs bg-white px-2 py-1 rounded mt-2 inline-block">{{ selectedStep.workflow.command }}</code>
+                </div>
+              </div>
+            </div>
+
+            <!-- Dynamic Configuration Form -->
+            <div *ngIf="selectedStep.workflow.isJsonRequired && getFormFields().length > 0" class="border-t pt-4">
+              <h4 class="font-medium text-secondary-900 mb-3">Configuration</h4>
+              <div class="space-y-3">
+                <div *ngFor="let field of getFormFields()" class="space-y-1">
+                  <label class="block text-sm font-medium text-secondary-700">{{ field.key }}</label>
+                  
+                  <!-- String Input -->
+                  <input *ngIf="field.type === 'string'" 
+                         type="text"
+                         [(ngModel)]="stepFormData[field.key]"
+                         (ngModelChange)="updateFormField(field.key, $event)"
+                         class="w-full px-3 py-2 border border-secondary-300 rounded-md text-sm">
+                  
+                  <!-- Number Input -->
+                  <input *ngIf="field.type === 'number'" 
+                         type="number"
+                         [(ngModel)]="stepFormData[field.key]"
+                         (ngModelChange)="updateFormField(field.key, $event)"
+                         class="w-full px-3 py-2 border border-secondary-300 rounded-md text-sm">
+                  
+                  <!-- Boolean Checkbox -->
+                  <label *ngIf="field.type === 'boolean'" class="flex items-center space-x-2 cursor-pointer">
+                    <input type="checkbox" 
+                           [(ngModel)]="stepFormData[field.key]"
+                           (ngModelChange)="updateFormField(field.key, $event)"
+                           class="rounded border-secondary-300">
+                    <span class="text-sm">{{ stepFormData[field.key] ? 'Enabled' : 'Disabled' }}</span>
+                  </label>
+                  
+                  <!-- Array/Object as JSON -->
+                  <textarea *ngIf="field.type === 'array' || field.type === 'object'" 
+                            [value]="field.value | json"
+                            (input)="onTextareaChange($event, field.key)"
+                            rows="3"
+                            class="w-full px-3 py-2 border border-secondary-300 rounded-md text-sm font-mono"
+                            placeholder="JSON format"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Simple Parameter Input -->
+            <div *ngIf="!selectedStep.workflow.isJsonRequired && selectedStep.workflow.parameters" class="border-t pt-4">
+              <h4 class="font-medium text-secondary-900 mb-3">Parameter</h4>
+              <div>
+                <label class="block text-sm font-medium text-secondary-700 mb-1">{{ selectedStep.workflow.parameters }}</label>
+                <input type="text" 
+                       [(ngModel)]="selectedStep.workflow.jsonData"
+                       placeholder="Enter parameter value"
+                       class="w-full px-3 py-2 border border-secondary-300 rounded-md text-sm">
+              </div>
+            </div>
+
+            <button (click)="removeStep(selectedStep)" 
+                    class="w-full btn-danger text-sm mt-4">
+              Remove Step
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="flex flex-col sm:flex-row items-center justify-between p-4 lg:p-6 border-t bg-gray-50 gap-4 sm:gap-0">
+      <div class="text-sm text-secondary-600">
+        {{ workflowSteps.length }} step(s) configured
+      </div>
+      <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+        <button (click)="close()" class="btn-secondary w-full sm:w-auto">Cancel</button>
+        <button (click)="save()" class="btn-primary w-full sm:w-auto">Save Workflow</button>
+      </div>
+    </div>
+  </div>
+</div>

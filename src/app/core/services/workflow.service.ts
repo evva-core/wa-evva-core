@@ -42,4 +42,8 @@ export class WorkflowService {
   deleteWorkflow(id: number): Observable<ApiResponse<void>> {
     return this.http.delete<ApiResponse<void>>(`${this.apiUrl}/${id}`);
   }
+
+  getAvailableWorkflows(): Observable<ApiResponse<Workflow[]>> {
+    return this.http.get<ApiResponse<Workflow[]>>(`${this.apiUrl}/available`);
+  }
 }

@@ -1,26 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { DashboardService, DashboardStats, RecentActivity } from '../../core/services/dashboard.service';
 
-interface DashboardStats {
-  totalHosts: number;
-  onlineHosts: number;
-  offlineHosts: number;
-  totalProjects: number;
-  activeProjects: number;
-  systemHealth: {
-    cpu: number;
-    memory: number;
-    disk: number;
-  };
-}
 
-interface RecentActivity {
-  id: string;
-  type: 'host_online' | 'host_offline' | 'project_updated' | 'service_started' | 'service_stopped';
-  message: string;
-  timestamp: Date;
-  severity: 'info' | 'warning' | 'error' | 'success';
-}
 
 @Component({
   selector: 'app-dashboard',
@@ -31,60 +13,25 @@ interface RecentActivity {
 })
 export class DashboardComponent implements OnInit {
   stats: DashboardStats = {
-    totalHosts: 24,
-    onlineHosts: 18,
-    offlineHosts: 6,
-    totalProjects: 12,
-    activeProjects: 8,
+    totalHosts: 0,
+    onlineHosts: 0,
+    offlineHosts: 0,
+    totalProjects: 0,
+    activeProjects: 0,
     systemHealth: {
-      cpu: 65,
-      memory: 78,
-      disk: 45
+      cpu: 0,
+      memory: 0,
+      disk: 0
     }
   };
 
-  recentActivities: RecentActivity[] = [
-    {
-      id: '1',
-      type: 'host_online',
-      message: 'Server-01 came online',
-      timestamp: new Date(Date.now() - 5 * 60 * 1000),
-      severity: 'success'
-    },
-    {
-      id: '2',
-      type: 'project_updated',
-      message: 'Project "Web API" updated successfully',
-      timestamp: new Date(Date.now() - 15 * 60 * 1000),
-      severity: 'info'
-    },
-    {
-      id: '3',
-      type: 'host_offline',
-      message: 'Server-05 went offline',
-      timestamp: new Date(Date.now() - 30 * 60 * 1000),
-      severity: 'error'
-    },
-    {
-      id: '4',
-      type: 'service_started',
-      message: 'Database service started on Server-03',
-      timestamp: new Date(Date.now() - 45 * 60 * 1000),
-      severity: 'success'
-    },
-    {
-      id: '5',
-      type: 'service_stopped',
-      message: 'Backup service stopped on Server-02',
-      timestamp: new Date(Date.now() - 60 * 60 * 1000),
-      severity: 'warning'
-    }
-  ];
+  recentActivities: RecentActivity[] = [];
+  isLoading = true;
 
-  constructor() {}
+  constructor(private dashboardService: DashboardService) {}
 
   ngOnInit(): void {
-    // TODO: Load real data from API
+    this.loadDashboardData();
   }
 
   get hostsOnlinePercentage(): number {
@@ -142,8 +89,27 @@ export class DashboardComponent implements OnInit {
   }
 
   refreshData(): void {
-    // TODO: Implement data refresh
-    console.log('Refreshing dashboard data...');
+    this.isLoading = true;
+    this.loadDashboardData();
+  }
+
+  private loadDashboardData(): void {
+    this.dashboardService.getDashboardData().subscribe({
+      next: (response) => {
+        if (response.success && response.data) {
+          this.stats = response.data.stats;
+          this.recentActivities = response.data.recentActivities.map(activity => ({
+            ...activity,
+            timestamp: new Date(activity.timestamp)
+          }));
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading dashboard data:', error);
+        this.isLoading = false;
+      }
+    });
   }
 }
 

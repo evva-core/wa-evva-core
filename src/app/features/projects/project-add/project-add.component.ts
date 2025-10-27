@@ -28,8 +28,8 @@ export class ProjectAddComponent implements OnInit {
 
   private loadHosts(): void {
     this.hostService.getHosts().subscribe({
-      next: (response: Host[]) => {
-        this.hosts = response.filter((host: Host) => host.isActive);
+      next: (response: any) => {
+        this.hosts = response.data.filter((host: Host) => host.isActive);
       },
       error: (error: any) => {
         console.error('Error loading hosts:', error);

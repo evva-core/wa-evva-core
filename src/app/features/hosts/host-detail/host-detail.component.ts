@@ -78,9 +78,9 @@ export class HostDetailComponent implements OnInit, OnDestroy {
   private loadInitialHostData(): void {
     this.isLoading = true;
     this.hostService.getHostByUniqueId(this.uniqueId).subscribe({
-      next: (response: ApiResponse<Host>) => {
+      next: (response: Host) => {
         
-        const initialHost = response.data; 
+        const initialHost = response; 
         this.host = {
           ...initialHost,
           status: initialHost.isActive ? 'online' : 'offline', 

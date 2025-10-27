@@ -96,9 +96,9 @@ export class DashboardComponent implements OnInit {
   private loadDashboardData(): void {
     this.dashboardService.getDashboardData().subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.stats = response.data.stats;
-          this.recentActivities = response.data.recentActivities.map(activity => ({
+        if (response) {
+          this.stats = response.stats;
+          this.recentActivities = response.recentActivities.map(activity => ({
             ...activity,
             timestamp: new Date(activity.timestamp)
           }));

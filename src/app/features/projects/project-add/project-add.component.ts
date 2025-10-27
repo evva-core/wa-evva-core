@@ -28,8 +28,8 @@ export class ProjectAddComponent implements OnInit {
 
   private loadHosts(): void {
     this.hostService.getHosts().subscribe({
-      next: (response: any) => {
-        this.hosts = response.data.filter((host: Host) => host.isActive);
+      next: (response: Host[]) => {
+        this.hosts = response.filter((host: Host) => host.isActive);
       },
       error: (error: any) => {
         console.error('Error loading hosts:', error);
@@ -39,7 +39,6 @@ export class ProjectAddComponent implements OnInit {
 
   onFormSubmit(projectData: Partial<Project>): void {
     this.isLoading = true;
-    
     this.projectService.createProject(projectData).subscribe({
       next: (project) => {
         console.log('Project created successfully:', project);

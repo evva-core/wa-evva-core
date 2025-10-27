@@ -28,11 +28,7 @@ export interface DashboardData {
   recentActivities: RecentActivity[];
 }
 
-export interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  message?: string;
-}
+
 
 @Injectable({
   providedIn: 'root'
@@ -42,15 +38,15 @@ export class DashboardService {
 
   constructor(private http: HttpService) {}
 
-  getDashboardStats(): Observable<ApiResponse<DashboardStats>> {
-    return this.http.get<ApiResponse<DashboardStats>>(`${this.endpoint}/stats`);
+  getDashboardStats(): Observable<DashboardStats> {
+    return this.http.get<DashboardStats>(`${this.endpoint}/stats`);
   }
 
-  getRecentActivities(): Observable<ApiResponse<RecentActivity[]>> {
-    return this.http.get<ApiResponse<RecentActivity[]>>(`${this.endpoint}/activities`);
+  getRecentActivities(): Observable<RecentActivity[]> {
+    return this.http.get<RecentActivity[]>(`${this.endpoint}/activities`);
   }
 
-  getDashboardData(): Observable<ApiResponse<DashboardData>> {
-    return this.http.get<ApiResponse<DashboardData>>(`${this.endpoint}/data`);
+  getDashboardData(): Observable<DashboardData> {
+    return this.http.get<DashboardData>(`${this.endpoint}/data`);
   }
 }

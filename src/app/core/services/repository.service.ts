@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpService } from './http.service';
-import { Repository, ApiResponse } from '../models';
+import { Repository } from '../models';
 
 @Injectable({
   providedIn: 'root'
@@ -11,19 +11,19 @@ export class RepositoryService {
 
   constructor(private http: HttpService) {}
 
-  createRepository(repository: Repository): Observable<ApiResponse<Repository>> {
-    return this.http.post<ApiResponse<Repository>>(this.endpoint, repository);
+  createRepository(repository: Repository): Observable<Repository> {
+    return this.http.post<Repository>(this.endpoint, repository);
   }
 
-  updateRepository(id: number, repository: Repository): Observable<ApiResponse<Repository>> {
-    return this.http.put<ApiResponse<Repository>>(`${this.endpoint}`, repository);
+  updateRepository(id: number, repository: Repository): Observable<Repository> {
+    return this.http.put<Repository>(`${this.endpoint}`, repository);
   }
 
-  deleteRepository(id: number): Observable<ApiResponse<void>> {
-    return this.http.delete<ApiResponse<void>>(`${this.endpoint}/${id}`);
+  deleteRepository(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.endpoint}/${id}`);
   }
 
-  cloneRepository(id: number): Observable<ApiResponse<any>> {
-    return this.http.post<ApiResponse<any>>(`${this.endpoint}/${id}/clone`, {});
+  cloneRepository(id: number): Observable<any> {
+    return this.http.post<any>(`${this.endpoint}/${id}/clone`, {});
   }
 }

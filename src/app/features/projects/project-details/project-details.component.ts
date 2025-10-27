@@ -57,10 +57,10 @@ export class ProjectDetailsComponent implements OnInit {
     
     this.projectService.getProject(id).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.project = response.data as ProjectDetails;
+        if (response) {
+          this.project = response as ProjectDetails;
         } else {
-          this.error = response.message || 'Failed to load project details';
+          this.error =  'Failed to load project details';
         }
         this.isLoading = false;
       },
@@ -163,6 +163,7 @@ export class ProjectDetailsComponent implements OnInit {
   loadHosts(): void {
     this.hostService.getHosts().subscribe({
       next: (hosts) => {
+        console.log(hosts)
         this.hosts = hosts;
       },
       error: (err) => {
@@ -197,11 +198,10 @@ export class ProjectDetailsComponent implements OnInit {
   private createRepository(repository: Repository): void {
     this.repositoryService.createRepository(repository).subscribe({
       next: (response) => {
-        if (response.success) {
-          repository.id = response.data?.id || Date.now();
+  
+          repository.id = response?.id || Date.now();
           this.project!.repositories.push(repository);
           this.closeRepositoryModal();
-        }
       },
       error: (err) => {
         console.error('Error creating repository:', err);
@@ -215,13 +215,13 @@ export class ProjectDetailsComponent implements OnInit {
   private updateRepository(repository: Repository): void {
     this.repositoryService.updateRepository(repository.id, repository).subscribe({
       next: (response) => {
-        if (response.success) {
+
           const index = this.project!.repositories.findIndex(r => r.id === repository.id);
           if (index !== -1) {
             this.project!.repositories[index] = repository;
           }
           this.closeRepositoryModal();
-        }
+        
       },
       error: (err) => {
         console.error('Error updating repository:', err);
@@ -236,9 +236,9 @@ export class ProjectDetailsComponent implements OnInit {
     if (confirm(`Are you sure you want to delete repository "${repository.name}"?`)) {
       this.repositoryService.deleteRepository(repository.id).subscribe({
         next: (response) => {
-          if (response.success) {
+ 
             this.project!.repositories = this.project!.repositories.filter(r => r.id !== repository.id);
-          }
+
         },
         error: (err) => {
           console.error('Error deleting repository:', err);
@@ -256,9 +256,7 @@ export class ProjectDetailsComponent implements OnInit {
   loadProjectWorkflows(projectId: string): void {
     this.projectService.getProjectWorkflows(projectId).subscribe({
       next: (response) => {
-        if (response.success && response.data) {
-          this.workflows = response.data;
-        }
+          this.workflows = response;
       },
       error: (err) => {
         console.error('Error loading project workflows:', err);
@@ -356,10 +354,10 @@ export class ProjectDetailsComponent implements OnInit {
 
     this.projectService.saveProjectWorkflows(this.project.id.toString(), request).subscribe({
       next: (response) => {
-        if (response.success) {
+    
           this.loadProjectWorkflows(this.project!.id.toString());
           this.closeWorkflowBuilder();
-        }
+      
       },
       error: (err) => {
         console.error('Error saving workflows:', err);

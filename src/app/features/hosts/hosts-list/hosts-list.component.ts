@@ -51,8 +51,8 @@ export class HostsListComponent implements OnInit {
   loadHosts(): void {
     this.isLoading = true;
     this.hostService.getHosts().subscribe({
-      next: (response: any) => {
-        this.hosts = response.data;
+      next: (response: Host[]) => {
+        this.hosts = response;
         this.extractFilterOptions();
         this.applyFilters();
         this.isLoading = false;
@@ -145,8 +145,8 @@ export class HostsListComponent implements OnInit {
   onHostCreate(hostData: Partial<Host>): void {
     this.hostService.createHost(hostData).subscribe({
         next: () => {
+          this.closeCreateModal();
             this.loadHosts();
-            this.closeCreateModal();
         },
         error: (error: any) => console.error('Error creating host:', error)
     });

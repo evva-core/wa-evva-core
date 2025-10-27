@@ -66,12 +66,10 @@ export class WorkflowBuilderModalComponent implements OnInit, OnChanges {
     this.workflowService.getAvailableWorkflows().subscribe({
       next: (response) => {
         console.log('Workflows response:', response);
-        if (response.success && response.data) {
-          this.availableWorkflows = response.data;
+   
+          this.availableWorkflows = response;
           console.log('Available workflows loaded:', this.availableWorkflows.length);
-        } else {
-          console.log('No workflows data in response');
-        }
+        
         this.isLoadingWorkflows = false;
       },
       error: (err) => {

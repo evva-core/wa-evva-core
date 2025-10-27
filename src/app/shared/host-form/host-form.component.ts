@@ -92,7 +92,7 @@ export class HostFormComponent implements OnInit {
       submissionObservable.subscribe({
         next: (response) => {
           this.isSubmitting = false;
-          this.formSubmit.emit(response.data);
+          this.formSubmit.emit(response);
         },
         error: (error) => {
           this.isSubmitting = false;

@@ -63,7 +63,7 @@
     <!-- Storage Information -->
     <div class="card">
       <h3 class="text-lg font-semibold text-secondary-900 mb-4">Storage</h3>
-      <div class="space-y-4" >
+      <div class="space-y-4 overflow-auto max-h-[300px] p-[4px]" >
         <div *ngFor="let disk of host.disks" >
           <div class="flex justify-between text-sm mb-2">
             <span class="text-secondary-600">{{ disk.name }}</span>

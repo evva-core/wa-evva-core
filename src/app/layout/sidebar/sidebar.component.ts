@@ -55,40 +55,40 @@ export class SidebarComponent implements OnInit {
       children: [
         { label: 'All Projects', icon: 'list', route: '/projects' },
         { label: 'Create Project', icon: 'plus', route: '/proj/add' },
-        { label: 'Templates', icon: 'template', route: '/projects/templates' },
-      ]
-    },
-    {
-      label: 'Monitoring',
-      icon: 'activity',
-      badge: '10',
-      children: [
-        { label: 'System Health', icon: 'heart', route: '/monitoring/health' },
-        { label: 'Performance', icon: 'trending-up', route: '/monitoring/performance' },
-        { label: 'Alerts', icon: 'alert-triangle', route: '/monitoring/alerts', badge: '3' }
-      ]
-    },
-    {
-      label: 'Automation',
-      icon: 'zap',
-      badge: '11',
-      children: [
-        { label: 'Schedules', icon: 'clock', route: '/automation/schedules' },
-        { label: 'Scripts', icon: 'code', route: '/automation/scripts' },
-        { label: 'Workflows', icon: 'git-branch', route: '/automation/workflows' }
-      ]
-    },
-    {
-      label: 'Settings',
-      icon: 'settings',
-      badge: '12',
-      children: [
-        { label: 'General', icon: 'sliders', route: '/settings/general' },
-        { label: 'Users', icon: 'users', route: '/settings/users' },
-        { label: 'Security', icon: 'shield', route: '/settings/security' },
-        { label: 'API Keys', icon: 'key', route: '/settings/api-keys' }
+       // { label: 'Templates', icon: 'template', route: '/projects/templates' },
       ]
     }
+    // {
+    //   label: 'Monitoring',
+    //   icon: 'activity',
+    //   badge: '10',
+    //   children: [
+    //     { label: 'System Health', icon: 'heart', route: '/monitoring/health' },
+    //     { label: 'Performance', icon: 'trending-up', route: '/monitoring/performance' },
+    //     { label: 'Alerts', icon: 'alert-triangle', route: '/monitoring/alerts', badge: '3' }
+    //   ]
+    // },
+    // {
+    //   label: 'Automation',
+    //   icon: 'zap',
+    //   badge: '11',
+    //   children: [
+    //     { label: 'Schedules', icon: 'clock', route: '/automation/schedules' },
+    //     { label: 'Scripts', icon: 'code', route: '/automation/scripts' },
+    //     { label: 'Workflows', icon: 'git-branch', route: '/automation/workflows' }
+    //   ]
+    // },
+    // {
+    //   label: 'Settings',
+    //   icon: 'settings',
+    //   badge: '12',
+    //   children: [
+    //     { label: 'General', icon: 'sliders', route: '/settings/general' },
+    //     { label: 'Users', icon: 'users', route: '/settings/users' },
+    //     { label: 'Security', icon: 'shield', route: '/settings/security' },
+    //     { label: 'API Keys', icon: 'key', route: '/settings/api-keys' }
+    //   ]
+    // }
   ];
 
   constructor() {
